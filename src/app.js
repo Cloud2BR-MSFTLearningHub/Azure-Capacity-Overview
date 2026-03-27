@@ -369,7 +369,8 @@ function populateFilterOptions(records) {
 }
 
 function applyFilters() {
-  const searchTerm = elements.searchInput.value.trim().toLowerCase();
+  const rawSearchTerm = elements.searchInput.value.trim();
+  const searchTerm = rawSearchTerm.toLowerCase();
   const availability = elements.riskFilter.value;
   const planning = elements.planningFilter.value;
   const provider = elements.providerFilter.value;
@@ -417,8 +418,8 @@ function applyFilters() {
     return true;
   });
 
-  renderUpdatesTable(state.filteredRecords);
-  renderTable(state.filteredRecords);
+  renderUpdatesTable(state.filteredRecords, rawSearchTerm);
+  renderTable(state.filteredRecords, rawSearchTerm);
 }
 
 function renderEmptyUpdatesTable() {
@@ -426,7 +427,7 @@ function renderEmptyUpdatesTable() {
   elements.updatesTableBody.innerHTML = '<tr><td colspan="6" class="empty-table">Refresh data to build Azure Updates searches for the products in view.</td></tr>';
 }
 
-function renderUpdatesTable(records) {
+function renderUpdatesTable(records, rawSearchTerm = "") {
   const updatesRows = records
     .map((record) => ({
       ...record,
@@ -455,17 +456,17 @@ function renderUpdatesTable(records) {
   elements.updatesTableBody.innerHTML = updatesRows
     .map(
       (record) => `
-        <tr>
+        <tr class="${rawSearchTerm ? "search-match-row" : ""}">
           <td><span class="risk-pill ${record.availability}">${escapeHtml(record.planningSignalLabel)}</span></td>
-          <td>${escapeHtml(getSourceProductName(record))}</td>
+          <td>${renderHighlightedText(getSourceProductName(record), rawSearchTerm)}</td>
           <td>
             <div class="search-term-cell">
-              <span class="search-term-chip">${escapeHtml(getUpdatesSearchTerm(record))}</span>
+              <span class="search-term-chip">${renderHighlightedText(getUpdatesSearchTerm(record), rawSearchTerm)}</span>
               <span class="search-term-note">Paste-ready term for Azure Updates</span>
             </div>
           </td>
-          <td>${escapeHtml(getRegionDisplayName(record.region))}</td>
-          <td>${escapeHtml(record.notes || "")}</td>
+          <td>${renderHighlightedText(getRegionDisplayName(record.region), rawSearchTerm)}</td>
+          <td>${renderHighlightedText(record.notes || "", rawSearchTerm)}</td>
           <td>
             <div class="source-actions">
               <a class="source-link" href="${escapeAttribute(getUpdatesUrl(record))}" target="_blank" rel="noreferrer" title="${escapeAttribute(getUpdatesTitle(record))}">Open Azure updates</a>
@@ -491,7 +492,7 @@ function renderUpdatesTable(records) {
     .join("");
 }
 
-function renderTable(records) {
+function renderTable(records, rawSearchTerm = "") {
   const sortedRecords = sortRecords(records, state.sort);
   const sortLabel = getSortLabel(state.sort);
 
@@ -511,16 +512,16 @@ function renderTable(records) {
   elements.tableBody.innerHTML = sortedRecords
     .map(
       (record) => `
-        <tr>
+        <tr class="${rawSearchTerm ? "search-match-row" : ""}">
           <td><span class="risk-pill ${record.availability}">${capitalize(record.availability)}</span></td>
-          <td>${escapeHtml(record.providerLabel)}</td>
-          <td>${escapeHtml(record.name)}</td>
-          <td>${escapeHtml(record.resourceType)}</td>
-          <td>${escapeHtml(record.region)}</td>
-          <td>${escapeHtml(record.metricLabel)}</td>
-          <td>${escapeHtml(formatMetricValue(record.metricValue, record.unit))}</td>
-          <td>${escapeHtml(record.notes || "")}</td>
-          <td>${renderSourceActions(record)}</td>
+          <td>${renderHighlightedText(record.providerLabel, rawSearchTerm)}</td>
+          <td>${renderHighlightedText(record.name, rawSearchTerm)}</td>
+          <td>${renderHighlightedText(record.resourceType, rawSearchTerm)}</td>
+          <td>${renderHighlightedText(record.region, rawSearchTerm)}</td>
+          <td>${renderHighlightedText(record.metricLabel, rawSearchTerm)}</td>
+          <td>${renderHighlightedText(formatMetricValue(record.metricValue, record.unit), rawSearchTerm)}</td>
+          <td>${renderHighlightedText(record.notes || "", rawSearchTerm)}</td>
+          <td>${renderSourceActions(record, rawSearchTerm)}</td>
         </tr>
       `,
     )
@@ -550,10 +551,10 @@ function handleTableSortClick(event) {
     direction: nextDirection,
   };
 
-  renderTable(state.filteredRecords);
+  renderTable(state.filteredRecords, elements.searchInput.value.trim());
 }
 
-function renderSourceActions(record) {
+function renderSourceActions(record, rawSearchTerm = "") {
   return `
     <div class="source-actions">
       <a class="source-link" href="${escapeAttribute(record.sourceUrl)}" target="_blank" rel="noreferrer" title="${escapeAttribute(record.sourceTitle)}">Products by region</a>
@@ -586,7 +587,7 @@ function renderSourceActions(record) {
       >
         📋
       </button>
-      <p class="source-context">${escapeHtml(getSourceContext(record))}</p>
+      <p class="source-context">${renderHighlightedText(getSourceContext(record), rawSearchTerm)}</p>
     </div>
   `;
 }
@@ -995,6 +996,119 @@ function isSubsequence(needle, haystack) {
   }
 
   return false;
+}
+
+function renderHighlightedText(value, rawQuery) {
+  const text = String(value || "");
+  if (!text) {
+    return "";
+  }
+
+  const terms = getHighlightTerms(rawQuery);
+  if (!terms.length) {
+    return escapeHtml(text);
+  }
+
+  const directRanges = mergeRanges(collectDirectMatchRanges(text, terms));
+  if (directRanges.length > 0) {
+    return renderHighlightedRanges(text, directRanges);
+  }
+
+  const compactQuery = compactSearchValue(rawQuery);
+  if (compactQuery.length < 3) {
+    return escapeHtml(text);
+  }
+
+  const subsequenceRanges = collectSubsequenceRanges(text, compactQuery);
+  return subsequenceRanges.length > 0 ? renderHighlightedRanges(text, subsequenceRanges) : escapeHtml(text);
+}
+
+function getHighlightTerms(rawQuery) {
+  return normalizeSearchValue(rawQuery)
+    .split(" ")
+    .filter((term) => term.length > 1);
+}
+
+function collectDirectMatchRanges(text, terms) {
+  const lowerText = text.toLowerCase();
+  const ranges = [];
+
+  for (const term of terms) {
+    let startIndex = 0;
+    while (startIndex < lowerText.length) {
+      const matchIndex = lowerText.indexOf(term, startIndex);
+      if (matchIndex === -1) {
+        break;
+      }
+
+      ranges.push([matchIndex, matchIndex + term.length]);
+      startIndex = matchIndex + term.length;
+    }
+  }
+
+  return ranges;
+}
+
+function collectSubsequenceRanges(text, compactQuery) {
+  const compactText = compactSearchValue(text);
+  if (!compactQuery || !isSubsequence(compactQuery, compactText)) {
+    return [];
+  }
+
+  const ranges = [];
+  let queryIndex = 0;
+
+  for (let textIndex = 0; textIndex < text.length; textIndex += 1) {
+    const normalizedChar = normalizeSearchValue(text[textIndex]);
+    if (!normalizedChar) {
+      continue;
+    }
+
+    if (normalizedChar === compactQuery[queryIndex]) {
+      ranges.push([textIndex, textIndex + 1]);
+      queryIndex += 1;
+      if (queryIndex === compactQuery.length) {
+        break;
+      }
+    }
+  }
+
+  return mergeRanges(ranges);
+}
+
+function mergeRanges(ranges) {
+  if (!ranges.length) {
+    return [];
+  }
+
+  const sortedRanges = [...ranges].sort((left, right) => left[0] - right[0]);
+  const mergedRanges = [sortedRanges[0].slice()];
+
+  for (const [start, end] of sortedRanges.slice(1)) {
+    const currentRange = mergedRanges[mergedRanges.length - 1];
+    if (start <= currentRange[1]) {
+      currentRange[1] = Math.max(currentRange[1], end);
+      continue;
+    }
+
+    mergedRanges.push([start, end]);
+  }
+
+  return mergedRanges;
+}
+
+function renderHighlightedRanges(text, ranges) {
+  let cursor = 0;
+  let html = "";
+
+  for (const [start, end] of ranges) {
+    html += escapeHtml(text.slice(cursor, start));
+    html += `<mark class="search-highlight">${escapeHtml(text.slice(start, end))}</mark>`;
+    cursor = end;
+  }
+
+  html += escapeHtml(text.slice(cursor));
+  return html;
 }
 
 function setSelectOptions(select, values, allLabel) {

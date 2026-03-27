@@ -458,6 +458,18 @@ h2 {
   gap: 8px;
 }
 
+.search-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.search-hint strong {
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
 .field-full {
   grid-column: 1 / -1;
 }
@@ -870,6 +882,22 @@ tbody tr:hover {
   background: color-mix(in oklab, var(--accent) 6%, transparent);
 }
 
+.search-match-row {
+  background: color-mix(in oklab, var(--accent) 5%, transparent);
+}
+
+.search-highlight {
+  padding: 0 0.12em;
+  border-radius: 0.28em;
+  background: color-mix(in oklab, var(--accent) 22%, #fff3a3);
+  color: inherit;
+  box-shadow: inset 0 -1px 0 color-mix(in oklab, var(--accent) 28%, transparent);
+}
+
+body[data-theme="dark"] .search-highlight {
+  background: color-mix(in oklab, var(--accent) 24%, #ffd66b);
+}
+
 .utilization-cell {
   min-width: 150px;
 }
@@ -1081,6 +1109,10 @@ tbody tr:hover {
     padding: 20px 14px 32px;
   }
 
+  .panel {
+    padding: 20px;
+  }
+
   .hero,
   .section-heading,
   .overview-header,
@@ -1098,6 +1130,14 @@ tbody tr:hover {
   .filter-grid,
   .summary-cards {
     grid-template-columns: 1fr;
+  }
+
+  .workspace-filters {
+    gap: 14px;
+  }
+
+  .search-hint {
+    max-width: 34ch;
   }
 
   .identity-header,
