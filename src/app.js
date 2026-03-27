@@ -22,13 +22,11 @@ const elements = {
   regionsInput: document.querySelector("#regions-input"),
   refreshButton: document.querySelector("#refresh-button"),
   demoButton: document.querySelector("#demo-button"),
-  themeLightButton: document.querySelector("#theme-light"),
-  themeDarkButton: document.querySelector("#theme-dark"),
+  themeToggleButton: document.querySelector("#theme-toggle"),
   lastRefresh: document.querySelector("#last-refresh"),
   statusBadge: document.querySelector("#status-badge"),
-  summaryCards: document.querySelector("#summary-cards"),
-  providerBreakdown: document.querySelector("#provider-breakdown"),
-  priorityList: document.querySelector("#priority-list"),
+  updatesMeta: document.querySelector("#updates-meta"),
+  updatesTableBody: document.querySelector("#updates-table-body"),
   searchInput: document.querySelector("#search-input"),
   riskFilter: document.querySelector("#risk-filter"),
   planningFilter: document.querySelector("#planning-filter"),
@@ -49,18 +47,17 @@ async function bootstrap() {
   hydrateSavedSettings();
   wireEvents();
   syncScopeVisibility();
-  renderEmptySummary();
+  renderEmptyUpdatesTable();
   loadDemoData({ source: "overview" });
 }
 
 function wireEvents() {
   elements.refreshButton.addEventListener("click", refreshData);
   elements.demoButton.addEventListener("click", () => loadDemoData({ source: "overview" }));
-  elements.themeLightButton.addEventListener("click", () => setTheme("light"));
-  elements.themeDarkButton.addEventListener("click", () => setTheme("dark"));
+  elements.themeToggleButton.addEventListener("click", toggleTheme);
   elements.tableBody.addEventListener("click", handleSourceActionClick);
+  elements.updatesTableBody.addEventListener("click", handleSourceActionClick);
   elements.tableHead.addEventListener("click", handleTableSortClick);
-  elements.priorityList.addEventListener("click", handleSourceActionClick);
 
   [
     elements.searchInput,
@@ -118,11 +115,22 @@ function setTheme(theme) {
   persistSettings();
 }
 
+function toggleTheme() {
+  setTheme(getCurrentTheme() === "dark" ? "light" : "dark");
+}
+
 function applyTheme(theme) {
   const normalizedTheme = theme === "dark" ? "dark" : "light";
   elements.pageBody.dataset.theme = normalizedTheme;
-  elements.themeLightButton.classList.toggle("is-active", normalizedTheme === "light");
-  elements.themeDarkButton.classList.toggle("is-active", normalizedTheme === "dark");
+  elements.themeToggleButton.textContent = normalizedTheme === "dark" ? "☀️" : "🌙";
+  elements.themeToggleButton.setAttribute(
+    "aria-label",
+    normalizedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode",
+  );
+  elements.themeToggleButton.setAttribute(
+    "title",
+    normalizedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode",
+  );
 }
 
 function getCurrentTheme() {
@@ -398,86 +406,67 @@ function applyFilters() {
     return true;
   });
 
-  renderSummary(state.filteredRecords, state.allRecords);
-  renderPriorityList(state.filteredRecords);
+  renderUpdatesTable(state.filteredRecords);
   renderTable(state.filteredRecords);
 }
 
-function renderEmptySummary() {
-  elements.summaryCards.innerHTML = [
-    buildSummaryCard("Tracked offers", "0", "No availability data loaded yet"),
-    buildSummaryCard("Available items", "0", "Region-ready offers and SKUs"),
-    buildSummaryCard("Limited items", "0", "Restricted or preview items"),
-    buildSummaryCard("Regions scanned", "0", "Physical Azure regions"),
-  ].join("");
-  elements.providerBreakdown.innerHTML = '<p class="empty-state">Provider availability will appear after refresh.</p>';
+function renderEmptyUpdatesTable() {
+  elements.updatesMeta.textContent = "No Azure update rows prepared";
+  elements.updatesTableBody.innerHTML = '<tr><td colspan="6" class="empty-table">Refresh data to build Azure Updates searches for the products in view.</td></tr>';
 }
 
-function renderSummary(filteredRecords, allRecords = filteredRecords) {
-  const availableCount = filteredRecords.filter((record) => record.availability === "available").length;
-  const limitedCount = filteredRecords.filter((record) => record.availability !== "available").length;
-  const distinctOffers = new Set(filteredRecords.map((record) => `${record.providerLabel}:${record.name}:${record.region}`)).size;
-
-  elements.summaryCards.innerHTML = [
-    buildSummaryCard("Tracked offers", String(distinctOffers), `${allRecords.length} total availability rows`),
-    buildSummaryCard("Available items", String(availableCount), "Ready for new deployments"),
-    buildSummaryCard("Limited items", String(limitedCount), "Restricted or preview-only items"),
-    buildSummaryCard("Regions scanned", String(state.regionsScanned), "Physical Azure regions"),
-  ].join("");
-
-  renderProviderBreakdown(filteredRecords);
-}
-
-function renderProviderBreakdown(records) {
-  if (records.length === 0) {
-    elements.providerBreakdown.innerHTML = '<p class="empty-state">No provider data matches the current filters.</p>';
-    return;
-  }
-
-  const grouped = groupBy(records, (record) => record.providerLabel);
-  elements.providerBreakdown.innerHTML = [...grouped.entries()]
-    .map(([providerLabel, rows]) => {
-      const availableCount = rows.filter((record) => record.availability === "available").length;
-      const percent = rows.length ? Math.round((availableCount / rows.length) * 100) : 0;
-      return `
-        <article class="provider-card">
-          <div class="provider-card-header">
-            <strong>${escapeHtml(providerLabel)}</strong>
-            <span>${percent}% ready</span>
-          </div>
-          <div class="provider-bar"><span style="width:${Math.min(percent, 100)}%"></span></div>
-          <p class="summary-subtext">${rows.length} rows · ${availableCount} available</p>
-        </article>
-      `;
+function renderUpdatesTable(records) {
+  const updatesRows = records
+    .map((record) => ({
+      ...record,
+      planningSignalLabel: getPlanningSignalLabel(record),
+    }))
+    .sort((left, right) => {
+      return (
+        right.severity - left.severity ||
+        getSourceProductName(left).localeCompare(getSourceProductName(right)) ||
+        getRegionDisplayName(left.region).localeCompare(getRegionDisplayName(right.region))
+      );
     })
-    .join("");
-}
+    .slice(0, 12);
 
-function renderPriorityList(records) {
-  const urgentRecords = records
-    .filter((record) => record.availability !== "available")
-    .sort(sortAvailabilityRecords)
-    .slice(0, 6);
+  elements.updatesMeta.textContent = updatesRows.length
+    ? `${updatesRows.length} Azure Updates searches ready`
+    : state.allRecords.length
+      ? "No Azure Updates rows match the current filters"
+      : "No Azure update rows prepared";
 
-  if (urgentRecords.length === 0) {
-    elements.priorityList.className = "priority-list empty-state";
-    elements.priorityList.textContent = "No restricted or limited offers in the current view.";
+  if (updatesRows.length === 0) {
+    elements.updatesTableBody.innerHTML = `<tr><td colspan="6" class="empty-table">${state.allRecords.length ? "Adjust the filters to broaden the update planning view." : "Refresh data to build Azure Updates searches for the products in view."}</td></tr>`;
     return;
   }
 
-  elements.priorityList.className = "priority-list";
-  elements.priorityList.innerHTML = urgentRecords
+  elements.updatesTableBody.innerHTML = updatesRows
     .map(
       (record) => `
-        <article class="priority-item">
-          <div class="priority-topline">
-            <strong>${escapeHtml(record.name)}</strong>
-            <span class="risk-pill ${record.availability}">${capitalize(record.availability)}</span>
-          </div>
-          <div class="priority-meta">${escapeHtml(record.providerLabel)} · ${escapeHtml(record.resourceType)} · ${escapeHtml(record.region)}</div>
-          <p class="priority-footnote">${escapeHtml(record.notes || `${record.metricLabel}: ${record.metricValue}`)}</p>
-          ${renderSourceActions(record)}
-        </article>
+        <tr>
+          <td><span class="risk-pill ${record.availability}">${escapeHtml(record.planningSignalLabel)}</span></td>
+          <td>${escapeHtml(getSourceProductName(record))}</td>
+          <td>${escapeHtml(record.name)}</td>
+          <td>${escapeHtml(getRegionDisplayName(record.region))}</td>
+          <td>${escapeHtml(record.notes || "")}</td>
+          <td>
+            <div class="source-actions">
+              <a class="source-link" href="${escapeAttribute(getUpdatesUrl(record))}" target="_blank" rel="noreferrer" title="${escapeAttribute(getUpdatesTitle(record))}">Open Azure updates</a>
+              <button
+                class="source-copy-button"
+                type="button"
+                data-copy-text="${escapeAttribute(getSourceProductName(record))}"
+                data-copy-label="${escapeAttribute(getSourceProductName(record))}"
+                data-copy-success="Copied Azure Updates search term for ${escapeAttribute(record.name)}."
+                data-copy-failure="Failed to copy the Azure Updates search term."
+                title="Copy the exact Azure Updates search term"
+              >
+                Copy search term
+              </button>
+            </div>
+          </td>
+        </tr>
       `,
     )
     .join("");
@@ -553,8 +542,21 @@ function renderSourceActions(record) {
       <button
         class="source-copy-button"
         type="button"
+        data-copy-text="${escapeAttribute(getSourceProductName(record))}"
+        data-copy-label="${escapeAttribute(getSourceProductName(record))}"
+        data-copy-success="Copied product search term for ${escapeAttribute(record.name)}."
+        data-copy-failure="Failed to copy the product search term."
+        title="Copy the exact product term to paste into the Microsoft Products by Region search box"
+      >
+        Copy product
+      </button>
+      <button
+        class="source-copy-button"
+        type="button"
         data-copy-text="${escapeAttribute(buildVerificationNote(record))}"
         data-copy-label="${escapeAttribute(record.name)}"
+        data-copy-success="Copied verification note for ${escapeAttribute(record.name)}."
+        data-copy-failure="Failed to copy the verification note."
         title="Copy the product, geography, region, and source links needed to verify this row"
       >
         Copy verify note
@@ -572,16 +574,18 @@ async function handleSourceActionClick(event) {
 
   const copyText = copyButton.getAttribute("data-copy-text");
   const label = copyButton.getAttribute("data-copy-label") || "row";
+  const successMessage = copyButton.getAttribute("data-copy-success") || `Copied source details for ${label}.`;
+  const failureMessage = copyButton.getAttribute("data-copy-failure") || "Failed to copy source details.";
   if (!copyText) {
     return;
   }
 
   try {
     await navigator.clipboard.writeText(copyText);
-    setStatus(`Copied verification note for ${label}.`, "good");
+    setStatus(successMessage, "good");
     flashCopiedState(copyButton);
   } catch {
-    setStatus("Failed to copy the verification note.", "warn");
+    setStatus(failureMessage, "warn");
   }
 }
 
@@ -718,12 +722,12 @@ function getSourceLabel(record) {
 }
 
 function getSourceTitle(record) {
-  return `Open the live Microsoft Products by Region table to verify ${getSourceProductName(record)}. Microsoft does not expose a stable prefiltered URL for this table, so use the provided product, geography, and region context.`;
+  return `Open the live Microsoft Products by Region table to verify ${getSourceProductName(record)}. This app cannot fill the external search box automatically, so use the copied product term plus the provided geography and region context.`;
 }
 
 function getUpdatesUrl(record) {
   const productName = encodeURIComponent(getSourceProductName(record));
-  return `https://azure.microsoft.com/en-us/updates/?query=${productName}`;
+  return `https://azure.microsoft.com/en-us/updates/?searchterms=${productName}`;
 }
 
 function getUpdatesTitle(record) {
@@ -731,7 +735,7 @@ function getUpdatesTitle(record) {
 }
 
 function getSourceContext(record) {
-  return `Use Microsoft table search: Product ${getSourceProductName(record)} · Geography ${getGeographyName(record.region) || "All geographies"} · Region ${getRegionDisplayName(record.region)}`;
+  return `Paste into Microsoft table search: ${getSourceProductName(record)} · Geography ${getGeographyName(record.region) || "All geographies"} · Region ${getRegionDisplayName(record.region)}`;
 }
 
 function buildVerificationNote(record) {

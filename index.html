@@ -27,10 +27,15 @@
         <div class="hero-tools">
           <div class="theme-card" aria-label="Theme selector">
             <span class="timestamp-label">Theme</span>
-            <div class="theme-switcher" role="group" aria-label="Choose color theme">
-              <button id="theme-light" class="theme-button is-active" type="button">Light</button>
-              <button id="theme-dark" class="theme-button" type="button">Dark</button>
-            </div>
+            <button
+              id="theme-toggle"
+              class="theme-toggle-button"
+              type="button"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              🌙
+            </button>
           </div>
 
           <div class="timestamp-card">
@@ -87,30 +92,36 @@
         <section class="panel overview-panel">
           <div class="overview-header">
             <div>
-              <h2>Availability overview</h2>
-              <p class="panel-intro">A quick read on what is ready, what is limited, and which providers need a closer look.</p>
+              <h2>Azure updates planning table</h2>
+              <p class="panel-intro">Use Microsoft Azure Updates searches for roadmap, preview, and rollout planning directly from the products in the current view.</p>
             </div>
             <div id="status-badge" class="status-badge neutral">Awaiting refresh</div>
           </div>
 
-          <div class="overview-grid">
-            <div class="overview-block metrics-block">
-              <div class="block-heading">
-                <h3>Current counts</h3>
-                <p class="block-copy">Totals for the regions and providers currently in view.</p>
-              </div>
-              <div id="summary-cards" class="summary-cards"></div>
-              <div id="provider-breakdown" class="provider-breakdown"></div>
+          <div class="overview-block updates-block">
+            <div class="block-heading">
+              <h3>Microsoft update searches</h3>
+              <p class="block-copy">Each row opens Azure Updates using the Microsoft <code>searchterms</code> pattern, for example <code>?searchterms=aks</code>.</p>
             </div>
-
-            <div class="overview-block attention-block">
-              <div class="block-heading">
-                <h3>Needs attention</h3>
-                <p class="block-copy">Restricted and preview items that are most likely to affect planning.</p>
-              </div>
-              <div id="priority-list" class="priority-list empty-state">
-                Refresh data to surface the highest-priority availability signals.
-              </div>
+            <p id="updates-meta" class="table-meta">No Azure update rows prepared</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Planning Signal</th>
+                    <th>Product</th>
+                    <th>Offer</th>
+                    <th>Region</th>
+                    <th>Published Signal</th>
+                    <th>Azure Updates</th>
+                  </tr>
+                </thead>
+                <tbody id="updates-table-body">
+                  <tr>
+                    <td colspan="6" class="empty-table">Refresh data to build Azure Updates searches for the products in view.</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </section>
