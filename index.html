@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Azure Capacity Overview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Static Azure API discovery dashboard</p>
+          <h1>Azure Capacity Overview</h1>
+          <p class="hero-copy">
+            Refresh live Azure regional availability, supported SKUs, and deployment
+            capability signals on demand so new projects can plan ahead before landing in a region.
+          </p>
+        </div>
+
+        <div class="timestamp-card">
+          <span class="timestamp-label">Last refresh</span>
+          <strong id="last-refresh">Not refreshed yet</strong>
+        </div>
+      </header>
+
+      <main class="dashboard-grid">
+        <section class="panel controls-panel">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Configuration</p>
+              <h2>Azure API scope</h2>
+            </div>
+            <div class="actions-inline">
+              <button id="demo-button" class="ghost-button" type="button">Load demo data</button>
+              <button id="refresh-button" class="primary-button" type="button">Refresh data</button>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <label class="field">
+              <span>Tenant ID or domain</span>
+              <input
+                id="tenant-input"
+                type="text"
+                placeholder="organizations or contoso.onmicrosoft.com"
+              />
+            </label>
+
+            <label class="field">
+              <span>App registration client ID</span>
+              <input
+                id="client-id-input"
+                type="text"
+                placeholder="00000000-0000-0000-0000-000000000000"
+              />
+            </label>
+
+            <label class="field field-full">
+              <span>Redirect URI</span>
+              <input id="redirect-uri-input" type="text" readonly />
+            </label>
+
+            <div class="field field-full auth-card">
+              <span>Microsoft Entra session</span>
+              <div class="auth-session-row">
+                <div>
+                  <strong id="account-label">Not signed in</strong>
+                  <p id="auth-helper" class="helper-text auth-helper">
+                    Configure the tenant and client ID, then sign in to acquire Azure Resource Manager tokens with MSAL.
+                  </p>
+                </div>
+                <div class="actions-inline">
+                  <button id="sign-in-button" class="ghost-button" type="button">Sign in</button>
+                  <button id="sign-out-button" class="ghost-button" type="button">Sign out</button>
+                </div>
+              </div>
+            </div>
+
+            <label class="field">
+              <span>Azure scope subscription IDs</span>
+              <textarea
+                id="subscriptions-input"
+                rows="4"
+                placeholder="One subscription ID per line or comma-separated"
+              ></textarea>
+            </label>
+
+            <label class="field">
+              <span>Target regions</span>
+              <textarea
+                id="regions-input"
+                rows="4"
+                placeholder="Optional. Leave blank and enable auto-discovery to scan available regions"
+              ></textarea>
+            </label>
+
+            <fieldset class="field providers-fieldset">
+              <legend>Availability providers</legend>
+              <div id="provider-options" class="provider-options"></div>
+            </fieldset>
+
+            <label class="checkbox-row">
+              <input id="autodiscover-toggle" type="checkbox" checked />
+              <span>Auto-discover physical Azure regions when the region list is empty</span>
+            </label>
+          </div>
+
+          <p class="helper-text">
+            Azure does not expose a public global "free capacity left" feed. This dashboard queries Azure Resource Manager directly, using subscription scope where ARM availability and SKU APIs require it, then shows what regions, resource types, and SKUs are deployable for new workloads.
+          </p>
+        </section>
+
+        <section class="panel summary-panel">
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="section-kicker">Current signal</p>
+              <h2>Availability overview</h2>
+            </div>
+            <div id="status-badge" class="status-badge neutral">Awaiting refresh</div>
+          </div>
+
+          <div id="summary-cards" class="summary-cards"></div>
+          <div id="provider-breakdown" class="provider-breakdown"></div>
+        </section>
+
+        <section class="panel insights-panel">
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="section-kicker">Regional signals</p>
+              <h2>Attention areas</h2>
+            </div>
+          </div>
+
+          <div id="priority-list" class="priority-list empty-state">
+            Refresh data to surface the highest-priority availability signals.
+          </div>
+        </section>
+
+        <section class="panel filters-panel">
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="section-kicker">Filter view</p>
+              <h2>Catalog filters</h2>
+            </div>
+          </div>
+
+          <div class="filter-grid">
+            <label class="field">
+              <span>Search</span>
+              <input id="search-input" type="search" placeholder="Offer, provider, resource type, region" />
+            </label>
+
+            <label class="field">
+              <span>Availability</span>
+              <select id="risk-filter">
+                <option value="all">All</option>
+                <option value="restricted">Restricted</option>
+                <option value="preview">Limited</option>
+                <option value="available">Available</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Provider</span>
+              <select id="provider-filter">
+                <option value="all">All providers</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Azure scope</span>
+              <select id="subscription-filter">
+                <option value="all">All scopes</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Region</span>
+              <select id="region-filter">
+                <option value="all">All regions</option>
+              </select>
+            </label>
+
+            <label class="checkbox-row">
+              <input id="at-risk-toggle" type="checkbox" />
+              <span>Only show restricted or limited rows</span>
+            </label>
+          </div>
+        </section>
+
+        <section class="panel table-panel">
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="section-kicker">Detailed availability</p>
+              <h2>Azure availability catalog</h2>
+            </div>
+            <p id="table-meta" class="table-meta">No availability data loaded</p>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Provider</th>
+                  <th>Offer</th>
+                  <th>Resource Type</th>
+                  <th>Azure Scope</th>
+                  <th>Region</th>
+                  <th>Metric</th>
+                  <th>Value</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody id="capacity-table-body">
+                <tr>
+                  <td colspan="9" class="empty-table">Refresh data or load the demo view to populate the dashboard.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
