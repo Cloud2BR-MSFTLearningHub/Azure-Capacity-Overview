@@ -552,12 +552,12 @@ function getSourceLabel(record) {
 }
 
 function getSourceTitle(record) {
-  return `Open Azure Product Availability by Region. Then use the copied autofill script to populate Search Products = ${getSourceProductName(record)} and Geography = ${getGeographyName(record.region) || "All"}.`;
+  return `Open Azure Product Availability by Region. Then use the copied autofill script to populate Search Products = ${getSourceProductName(record)} and Geography = ${getGeographyOptionValue(record.region) || "all"}.`;
 }
 
 function buildSourceAutofillScript(record) {
   const productName = getSourceProductName(record);
-  const geographyName = getGeographyName(record.region) || "All";
+  const geographyName = getGeographyOptionValue(record.region) || "all";
 
   return `(() => {
   const product = ${JSON.stringify(productName)};
@@ -582,6 +582,10 @@ function buildSourceAutofillScript(record) {
     }
   }
 })();`;
+}
+
+function getGeographyOptionValue(region) {
+  return REGION_METADATA[region]?.geography || "";
 }
 
 function getSourceProductName(record) {
@@ -685,6 +689,11 @@ const REGION_METADATA = {
   australiacentral2: { displayName: "Australia Central 2", geography: "Australia" },
   australiaeast: { displayName: "Australia East", geography: "Australia" },
   australiasoutheast: { displayName: "Australia Southeast", geography: "Australia" },
+  chinaeast: { displayName: "China East", geography: "China (operated by 21Vianet)" },
+  chinaeast2: { displayName: "China East 2", geography: "China (operated by 21Vianet)" },
+  chinanorth: { displayName: "China North", geography: "China (operated by 21Vianet)" },
+  chinanorth2: { displayName: "China North 2", geography: "China (operated by 21Vianet)" },
+  chinanorth3: { displayName: "China North 3", geography: "China (operated by 21Vianet)" },
   centralindia: { displayName: "Central India", geography: "India" },
   southindia: { displayName: "South India", geography: "India" },
   westindia: { displayName: "West India", geography: "India" },
@@ -696,6 +705,14 @@ const REGION_METADATA = {
   malaysiawest: { displayName: "Malaysia West", geography: "Malaysia" },
   newzealandnorth: { displayName: "New Zealand North", geography: "New Zealand" },
   taiwan: { displayName: "Taiwan", geography: "Taiwan" },
+  usgovarizona: { displayName: "US Gov Arizona", geography: "Azure Government" },
+  usgovtexas: { displayName: "US Gov Texas", geography: "Azure Government" },
+  usgovvirginia: { displayName: "US Gov Virginia", geography: "Azure Government" },
+  usdodcentral: { displayName: "US DoD Central", geography: "Azure Government" },
+  usdodeast: { displayName: "US DoD East", geography: "Azure Government" },
+  usseceast: { displayName: "US Sec East", geography: "Azure Government" },
+  ussecwest: { displayName: "US Sec West", geography: "Azure Government" },
+  ussecwestcentral: { displayName: "US Sec West Central", geography: "Azure Government" },
 };
 
 bootstrap().catch((error) => {
