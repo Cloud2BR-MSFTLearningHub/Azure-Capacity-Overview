@@ -70,13 +70,17 @@
           </div>
 
           <p class="helper-text">
-            Azure does not expose a public global "free capacity left" feed. This dashboard brings together a lightweight regional view of Azure resource availability using a built-in catalog of regions, SKUs, and provider signals.
+            Azure does not expose a public global "free capacity left" feed. This dashboard brings together a lightweight regional view of Azure resource availability using a built-in catalog of regions, SKUs, and provider signals so you can compare the published signals and corroborate them against Microsoft sources.
           </p>
           <p class="helper-links">
             Public Microsoft references:
             <a href="https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table" target="_blank" rel="noreferrer">Products by region</a>
             <a href="https://azure.microsoft.com/explore/global-infrastructure/geographies" target="_blank" rel="noreferrer">Geographies</a>
             <a href="https://learn.microsoft.com/azure/reliability/availability-zones-overview" target="_blank" rel="noreferrer">Availability zones</a>
+            <a href="https://azure.microsoft.com/en-us/updates/" target="_blank" rel="noreferrer">Azure updates</a>
+          </p>
+          <p class="helper-footnote">
+            Products by region is the live Microsoft table for current regional availability. Azure Updates is the planning source for preview, rollout, and future capability signals.
           </p>
         </section>
 
@@ -137,6 +141,16 @@
             </label>
 
             <label class="field">
+              <span>Planning horizon</span>
+              <select id="planning-filter">
+                <option value="all">All signals</option>
+                <option value="available-now">Available now</option>
+                <option value="roadmap">Preview and rollout</option>
+                <option value="constraints">Restrictions and blockers</option>
+              </select>
+            </label>
+
+            <label class="field">
               <span>Provider</span>
               <select id="provider-filter">
                 <option value="all">All providers</option>
@@ -167,16 +181,66 @@
             <table>
               <thead>
                 <tr>
-                  <th>Status</th>
-                  <th>Provider</th>
-                  <th>Offer</th>
-                  <th>Resource Type</th>
-                  <th id="scope-column-header" hidden>Azure Scope</th>
-                  <th>Region</th>
-                  <th>Metric</th>
-                  <th>Value</th>
-                  <th>Notes</th>
-                  <th>Source</th>
+                  <th aria-sort="descending">
+                    <button class="sort-button is-active" type="button" data-sort-key="availability">
+                      <span>Status</span>
+                      <span class="sort-indicator" data-sort-direction="desc" aria-hidden="true"></span>
+                    </button>
+                  </th>
+                  <th aria-sort="none">
+                    <button class="sort-button" type="button" data-sort-key="providerLabel">
+                      <span>Provider</span>
+                      <span class="sort-indicator" data-sort-direction="none" aria-hidden="true"></span>
+                    </button>
+                  </th>
+                  <th aria-sort="none">
+                    <button class="sort-button" type="button" data-sort-key="name">
+                      <span>Offer</span>
+                      <span class="sort-indicator" data-sort-direction="none" aria-hidden="true"></span>
+                    </button>
+                  </th>
+                  <th aria-sort="none">
+                    <button class="sort-button" type="button" data-sort-key="resourceType">
+                      <span>Resource Type</span>
+                      <span class="sort-indicator" data-sort-direction="none" aria-hidden="true"></span>
+                    </button>
+                  </th>
+                  <th id="scope-column-header" hidden aria-sort="none">
+                    <button class="sort-button" type="button" data-sort-key="subscriptionId">
+                      <span>Azure Scope</span>
+                      <span class="sort-indicator" data-sort-direction="none" aria-hidden="true"></span>
+                    </button>
+                  </th>
+                  <th aria-sort="none">
+                    <button class="sort-button" type="button" data-sort-key="region">
+                      <span>Region</span>
+                      <span class="sort-indicator" data-sort-direction="none" aria-hidden="true"></span>
+                    </button>
+                  </th>
+                  <th aria-sort="none">
+                    <button class="sort-button" type="button" data-sort-key="metricLabel">
+                      <span>Metric</span>
+                      <span class="sort-indicator" data-sort-direction="none" aria-hidden="true"></span>
+                    </button>
+                  </th>
+                  <th aria-sort="none">
+                    <button class="sort-button" type="button" data-sort-key="metricValue">
+                      <span>Value</span>
+                      <span class="sort-indicator" data-sort-direction="none" aria-hidden="true"></span>
+                    </button>
+                  </th>
+                  <th aria-sort="none">
+                    <button class="sort-button" type="button" data-sort-key="notes">
+                      <span>Notes</span>
+                      <span class="sort-indicator" data-sort-direction="none" aria-hidden="true"></span>
+                    </button>
+                  </th>
+                  <th aria-sort="none">
+                    <button class="sort-button" type="button" data-sort-key="source">
+                      <span>Source</span>
+                      <span class="sort-indicator" data-sort-direction="none" aria-hidden="true"></span>
+                    </button>
+                  </th>
                 </tr>
               </thead>
               <tbody id="capacity-table-body">

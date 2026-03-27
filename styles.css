@@ -26,6 +26,9 @@
   --group-bg: rgba(255, 253, 249, 0.7);
   --card-top: rgba(255, 253, 249, 0.96);
   --card-bottom: rgba(243, 239, 231, 0.96);
+  --sort-ref-idle: rgba(0, 32, 80, 0.36);
+  --sort-ref-active: #0078d4;
+  --sort-ref-focus: rgba(0, 120, 212, 0.24);
 }
 
 body[data-theme="dark"] {
@@ -53,6 +56,9 @@ body[data-theme="dark"] {
   --group-bg: rgba(21, 25, 25, 0.88);
   --card-top: rgba(26, 31, 31, 0.98);
   --card-bottom: rgba(21, 25, 25, 0.98);
+  --sort-ref-idle: #8b949e;
+  --sort-ref-active: #58a6ff;
+  --sort-ref-focus: rgba(88, 166, 255, 0.28);
 }
 
 * {
@@ -200,6 +206,13 @@ h2 {
   line-height: 1.6;
 }
 
+.helper-footnote {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 .helper-links a {
   color: var(--accent-strong);
   margin-left: 8px;
@@ -224,6 +237,14 @@ h2 {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+}
+
+.source-context {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
 }
 
 .source-copy-button {
@@ -355,7 +376,7 @@ h2 {
 
 .workspace-filters {
   margin-bottom: 20px;
-  grid-template-columns: minmax(220px, 1.4fr) repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(220px, 1.4fr) repeat(4, minmax(0, 1fr));
   align-items: end;
 }
 
@@ -685,6 +706,96 @@ th {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--muted);
+}
+
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 4px 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.sort-button:hover,
+.sort-button:focus-visible,
+.sort-button.is-active {
+  color: var(--sort-ref-active);
+}
+
+.sort-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--sort-ref-focus);
+  border-radius: 8px;
+  padding-inline: 6px;
+  margin-inline: -6px;
+}
+
+.sort-button:hover .sort-indicator,
+.sort-button:focus-visible .sort-indicator,
+.sort-button.is-active .sort-indicator {
+  color: var(--sort-ref-active);
+}
+
+.sort-indicator {
+  position: relative;
+  width: 12px;
+  height: 14px;
+  flex: 0 0 12px;
+  color: var(--sort-ref-idle);
+}
+
+.sort-indicator::before,
+.sort-indicator::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 0;
+  height: 0;
+  margin-left: -4px;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  transition: border-color 160ms ease, opacity 160ms ease, transform 160ms ease;
+}
+
+.sort-indicator::before {
+  top: 0;
+  border-bottom: 5px solid currentColor;
+  opacity: 0.45;
+}
+
+.sort-indicator::after {
+  bottom: 0;
+  border-top: 5px solid currentColor;
+  opacity: 0.45;
+}
+
+.sort-indicator[data-sort-direction="asc"]::before {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.sort-indicator[data-sort-direction="asc"]::after {
+  opacity: 0.18;
+}
+
+.sort-indicator[data-sort-direction="desc"]::before {
+  opacity: 0.18;
+}
+
+.sort-indicator[data-sort-direction="desc"]::after {
+  opacity: 1;
+  transform: translateY(1px);
+}
+
+.sort-indicator[data-sort-direction="none"]::before,
+.sort-indicator[data-sort-direction="none"]::after {
+  opacity: 0.38;
 }
 
 tbody tr:hover {

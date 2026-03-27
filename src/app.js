@@ -10,6 +10,10 @@ const state = {
   regionsScanned: 0,
   loading: false,
   dataMode: "overview",
+  sort: {
+    key: "availability",
+    direction: "desc",
+  },
 };
 
 const elements = {
@@ -27,6 +31,7 @@ const elements = {
   priorityList: document.querySelector("#priority-list"),
   searchInput: document.querySelector("#search-input"),
   riskFilter: document.querySelector("#risk-filter"),
+  planningFilter: document.querySelector("#planning-filter"),
   providerFilter: document.querySelector("#provider-filter"),
   subscriptionFilter: document.querySelector("#subscription-filter"),
   subscriptionFilterField: document.querySelector("#scope-filter-field"),
@@ -34,6 +39,7 @@ const elements = {
   atRiskToggle: document.querySelector("#at-risk-toggle"),
   tableMeta: document.querySelector("#table-meta"),
   tableBody: document.querySelector("#capacity-table-body"),
+  tableHead: document.querySelector("thead"),
   scopeColumnHeader: document.querySelector("#scope-column-header"),
 };
 
@@ -53,11 +59,13 @@ function wireEvents() {
   elements.themeLightButton.addEventListener("click", () => setTheme("light"));
   elements.themeDarkButton.addEventListener("click", () => setTheme("dark"));
   elements.tableBody.addEventListener("click", handleSourceActionClick);
+  elements.tableHead.addEventListener("click", handleTableSortClick);
   elements.priorityList.addEventListener("click", handleSourceActionClick);
 
   [
     elements.searchInput,
     elements.riskFilter,
+    elements.planningFilter,
     elements.providerFilter,
     elements.subscriptionFilter,
     elements.regionFilter,
@@ -82,6 +90,7 @@ function hydrateSavedSettings() {
     const settings = JSON.parse(raw);
     elements.regionsInput.value = settings.regions ?? "";
     applyTheme(settings.theme || "light");
+    elements.planningFilter.value = settings.planning || "all";
 
     if (Array.isArray(settings.providers) && settings.providers.length > 0) {
       for (const checkbox of elements.providerOptions.querySelectorAll('input[type="checkbox"]')) {
@@ -98,6 +107,7 @@ function persistSettings() {
     regions: elements.regionsInput.value.trim(),
     providers: getSelectedProviderIds(),
     theme: getCurrentTheme(),
+    planning: elements.planningFilter.value,
   };
 
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
@@ -342,6 +352,7 @@ function populateFilterOptions(records) {
 function applyFilters() {
   const searchTerm = elements.searchInput.value.trim().toLowerCase();
   const availability = elements.riskFilter.value;
+  const planning = elements.planningFilter.value;
   const provider = elements.providerFilter.value;
   const subscription = elements.subscriptionFilter.value;
   const region = elements.regionFilter.value;
@@ -349,6 +360,18 @@ function applyFilters() {
 
   state.filteredRecords = state.allRecords.filter((record) => {
     if (availability !== "all" && record.availability !== availability) {
+      return false;
+    }
+
+    if (planning === "available-now" && record.availability !== "available") {
+      return false;
+    }
+
+    if (planning === "roadmap" && record.availability !== "preview") {
+      return false;
+    }
+
+    if (planning === "constraints" && record.availability !== "restricted") {
       return false;
     }
 
@@ -461,18 +484,23 @@ function renderPriorityList(records) {
 }
 
 function renderTable(records) {
-  elements.tableMeta.textContent = records.length
-    ? `${records.length} rows shown`
+  const sortedRecords = sortRecords(records, state.sort);
+  const sortLabel = getSortLabel(state.sort);
+
+  elements.tableMeta.textContent = sortedRecords.length
+    ? `${sortedRecords.length} rows shown · Sorted by ${sortLabel}`
     : state.allRecords.length
       ? "No rows match the current filters"
       : "No availability data loaded";
 
-  if (records.length === 0) {
+  updateSortHeaders();
+
+  if (sortedRecords.length === 0) {
     elements.tableBody.innerHTML = `<tr><td colspan="${getTableColumnCount()}" class="empty-table">${state.allRecords.length ? "Adjust the filters to broaden the view." : "Refresh data or load the overview view to populate the dashboard."}</td></tr>`;
     return;
   }
 
-  elements.tableBody.innerHTML = records
+  elements.tableBody.innerHTML = sortedRecords
     .map(
       (record) => `
         <tr>
@@ -491,19 +519,47 @@ function renderTable(records) {
     .join("");
 }
 
+function handleTableSortClick(event) {
+  const sortButton = event.target.closest("[data-sort-key]");
+  if (!sortButton) {
+    return;
+  }
+
+  const nextKey = sortButton.dataset.sortKey;
+  if (!nextKey) {
+    return;
+  }
+
+  const isSameKey = state.sort.key === nextKey;
+  const nextDirection = isSameKey
+    ? state.sort.direction === "asc"
+      ? "desc"
+      : "asc"
+    : getDefaultSortDirection(nextKey);
+
+  state.sort = {
+    key: nextKey,
+    direction: nextDirection,
+  };
+
+  renderTable(state.filteredRecords);
+}
+
 function renderSourceActions(record) {
   return `
     <div class="source-actions">
-      <a class="source-link" href="${escapeAttribute(record.sourceUrl)}" target="_blank" rel="noreferrer" title="${escapeAttribute(record.sourceTitle)}">Open table</a>
+      <a class="source-link" href="${escapeAttribute(record.sourceUrl)}" target="_blank" rel="noreferrer" title="${escapeAttribute(record.sourceTitle)}">Products by region</a>
+      <a class="source-link" href="${escapeAttribute(getUpdatesUrl(record))}" target="_blank" rel="noreferrer" title="${escapeAttribute(getUpdatesTitle(record))}">Azure updates</a>
       <button
         class="source-copy-button"
         type="button"
-        data-copy-text="${escapeAttribute(buildSourceFilterScript(record))}"
+        data-copy-text="${escapeAttribute(buildVerificationNote(record))}"
         data-copy-label="${escapeAttribute(record.name)}"
-        title="Copy a script to filter the Azure Products by Region table inside that page"
+        title="Copy the product, geography, region, and source links needed to verify this row"
       >
-        Copy filter script
+        Copy verify note
       </button>
+      <p class="source-context">${escapeHtml(getSourceContext(record))}</p>
     </div>
   `;
 }
@@ -522,10 +578,10 @@ async function handleSourceActionClick(event) {
 
   try {
     await navigator.clipboard.writeText(copyText);
-    setStatus(`Copied filter script for ${label}.`, "good");
+    setStatus(`Copied verification note for ${label}.`, "good");
     flashCopiedState(copyButton);
   } catch {
-    setStatus("Failed to copy the filter script.", "warn");
+    setStatus("Failed to copy the verification note.", "warn");
   }
 }
 
@@ -538,6 +594,30 @@ function flashCopiedState(button) {
     button.textContent = originalText;
     button.disabled = false;
   }, 1200);
+}
+
+function updateSortHeaders() {
+  const sortButtons = elements.tableHead.querySelectorAll("[data-sort-key]");
+
+  for (const button of sortButtons) {
+    const key = button.dataset.sortKey;
+    const header = button.closest("th");
+    const indicator = button.querySelector(".sort-indicator");
+    const isActive = key === state.sort.key;
+
+    button.classList.toggle("is-active", isActive);
+
+    if (header) {
+      header.setAttribute(
+        "aria-sort",
+        isActive ? (state.sort.direction === "asc" ? "ascending" : "descending") : "none",
+      );
+    }
+
+    if (indicator) {
+      indicator.dataset.sortDirection = isActive ? state.sort.direction : "none";
+    }
+  }
 }
 
 function setLoading(isLoading) {
@@ -561,6 +641,74 @@ function getTableColumnCount() {
   return 9;
 }
 
+function getDefaultSortDirection(key) {
+  return key === "availability" ? "desc" : "asc";
+}
+
+function getSortLabel(sort) {
+  const labels = {
+    availability: "Status",
+    providerLabel: "Provider",
+    name: "Offer",
+    resourceType: "Resource Type",
+    subscriptionId: "Azure Scope",
+    region: "Region",
+    metricLabel: "Metric",
+    metricValue: "Value",
+    notes: "Notes",
+    source: "Source",
+  };
+
+  const directionLabel = sort.direction === "asc" ? "ascending" : "descending";
+  return `${labels[sort.key] || sort.key} (${directionLabel})`;
+}
+
+function sortRecords(records, sort) {
+  return [...records].sort((left, right) => compareRecords(left, right, sort));
+}
+
+function compareRecords(left, right, sort) {
+  const directionMultiplier = sort.direction === "asc" ? 1 : -1;
+  const leftValue = getSortValue(left, sort.key);
+  const rightValue = getSortValue(right, sort.key);
+
+  let comparison = 0;
+
+  if (typeof leftValue === "number" && typeof rightValue === "number") {
+    comparison = leftValue - rightValue;
+  } else {
+    comparison = String(leftValue).localeCompare(String(rightValue), undefined, {
+      numeric: true,
+      sensitivity: "base",
+    });
+  }
+
+  if (comparison !== 0) {
+    return comparison * directionMultiplier;
+  }
+
+  return sortAvailabilityRecords(left, right);
+}
+
+function getSortValue(record, key) {
+  switch (key) {
+    case "availability":
+      return record.severity;
+    case "region":
+      return getRegionDisplayName(record.region);
+    case "metricValue":
+      return typeof record.metricValue === "number"
+        ? record.metricValue
+        : formatMetricValue(record.metricValue, record.unit);
+    case "notes":
+      return record.notes || "";
+    case "source":
+      return `${getSourceProductName(record)} ${getRegionDisplayName(record.region)}`;
+    default:
+      return record[key] ?? "";
+  }
+}
+
 function getSourceUrl(record) {
   return "https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/table";
 }
@@ -570,56 +718,51 @@ function getSourceLabel(record) {
 }
 
 function getSourceTitle(record) {
-  return `Open Azure Product Availability by Region, then use the copied script in that page's DevTools console to set Search Products = ${getSourceProductName(record)} and Geography = ${getGeographyOptionValue(record.region) || "all"}.`;
+  return `Open the live Microsoft Products by Region table to verify ${getSourceProductName(record)}. Microsoft does not expose a stable prefiltered URL for this table, so use the provided product, geography, and region context.`;
 }
 
-function buildSourceFilterScript(record) {
+function getUpdatesUrl(record) {
+  const productName = encodeURIComponent(getSourceProductName(record));
+  return `https://azure.microsoft.com/en-us/updates/?query=${productName}`;
+}
+
+function getUpdatesTitle(record) {
+  return `Open Azure Updates for ${getSourceProductName(record)} announcements, preview notices, and rollout notes.`;
+}
+
+function getSourceContext(record) {
+  return `Use Microsoft table search: Product ${getSourceProductName(record)} · Geography ${getGeographyName(record.region) || "All geographies"} · Region ${getRegionDisplayName(record.region)}`;
+}
+
+function buildVerificationNote(record) {
   const productName = getSourceProductName(record);
-  const geographyName = getGeographyOptionValue(record.region) || "all";
+  const geographyName = getGeographyName(record.region) || "All geographies";
+  const regionName = getRegionDisplayName(record.region);
 
-  return `(() => {
-  const product = ${JSON.stringify(productName)};
-  const geography = ${JSON.stringify(geographyName)};
-
-  const applyFilters = () => {
-    const productInput = document.getElementById("product-search");
-    const geographySelect = document.getElementById("geography-names");
-    if (!productInput || !geographySelect) {
-      return false;
-    }
-
-    productInput.focus();
-    productInput.value = product;
-    productInput.dispatchEvent(new Event("input", { bubbles: true }));
-
-    const matchingOption = Array.from(geographySelect.options).find(
-      (option) => option.value === geography || option.text.trim() === geography,
-    );
-
-    if (matchingOption) {
-      geographySelect.value = matchingOption.value;
-      geographySelect.dispatchEvent(new Event("change", { bubbles: true }));
-    }
-
-    return true;
-  };
-
-  if (applyFilters()) {
-    return;
-  }
-
-  const retryInterval = window.setInterval(() => {
-    if (applyFilters()) {
-      window.clearInterval(retryInterval);
-    }
-  }, 300);
-
-  window.setTimeout(() => window.clearInterval(retryInterval), 10000);
-})();`;
+  return [
+    `Verify dashboard row`,
+    `Product: ${productName}`,
+    `Geography: ${geographyName}`,
+    `Region: ${regionName}`,
+    `Offer: ${record.name}`,
+    `Planning signal: ${getPlanningSignalLabel(record)}`,
+    record.notes ? `Published signal: ${record.notes}` : "",
+    `Products by region: ${getSourceUrl(record)}`,
+    `Azure updates: ${getUpdatesUrl(record)}`,
+    `Suggested check: open Products by Region, search for the product, choose the geography, then confirm the region. Use Azure Updates to validate preview, rollout, or future capability context.`,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
-function getGeographyOptionValue(region) {
-  return REGION_METADATA[region]?.geography || "";
+function getPlanningSignalLabel(record) {
+  if (record.availability === "preview") {
+    return "Preview or staged rollout";
+  }
+  if (record.availability === "restricted") {
+    return "Restricted or access-limited";
+  }
+  return "Currently available";
 }
 
 function getSourceProductName(record) {
