@@ -474,11 +474,11 @@ function renderSourceActions(record) {
       <button
         class="source-copy-button"
         type="button"
-        data-copy-text="${escapeAttribute(buildSourceFilterCopyText(record))}"
+        data-copy-text="${escapeAttribute(buildSourceAutofillScript(record))}"
         data-copy-label="${escapeAttribute(record.name)}"
-        title="Copy the product and geography values for the Azure Products by Region page"
+        title="Copy a console script that fills Search Products and Select Geography on the Azure Products by Region page"
       >
-        Copy filters
+        Copy autofill
       </button>
     </div>
   `;
@@ -498,10 +498,10 @@ async function handleSourceActionClick(event) {
 
   try {
     await navigator.clipboard.writeText(copyText);
-    setStatus(`Copied table filters for ${label}.`, "good");
+    setStatus(`Copied autofill script for ${label}.`, "good");
     flashCopiedState(copyButton);
   } catch {
-    setStatus("Failed to copy the table filters.", "warn");
+    setStatus("Failed to copy the autofill script.", "warn");
   }
 }
 
@@ -552,22 +552,36 @@ function getSourceLabel(record) {
 }
 
 function getSourceTitle(record) {
-  return `Open Azure Product Availability by Region. Then use Search Products = ${getSourceProductName(record)} and Geography = ${getGeographyName(record.region) || "All"}.`;
+  return `Open Azure Product Availability by Region. Then use the copied autofill script to populate Search Products = ${getSourceProductName(record)} and Geography = ${getGeographyName(record.region) || "All"}.`;
 }
 
-function buildSourceFilterCopyText(record) {
+function buildSourceAutofillScript(record) {
   const productName = getSourceProductName(record);
   const geographyName = getGeographyName(record.region) || "All";
-  const regionName = getRegionDisplayName(record.region);
 
-  return [
-    `Search Products: ${productName}`,
-    `Select Geography: ${geographyName}`,
-    `Target Region: ${regionName}`,
-    record.name ? `Offer shown in dashboard: ${record.name}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
+  return `(() => {
+  const product = ${JSON.stringify(productName)};
+  const geography = ${JSON.stringify(geographyName)};
+  const productInput = document.getElementById("product-search");
+  const geographySelect = document.getElementById("geography-names");
+
+  if (productInput) {
+    productInput.focus();
+    productInput.value = product;
+    productInput.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  if (geographySelect) {
+    const matchingOption = Array.from(geographySelect.options).find(
+      (option) => option.value === geography || option.text.trim() === geography,
+    );
+
+    if (matchingOption) {
+      geographySelect.value = matchingOption.value;
+      geographySelect.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  }
+})();`;
 }
 
 function getSourceProductName(record) {
