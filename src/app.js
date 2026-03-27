@@ -474,11 +474,11 @@ function renderSourceActions(record) {
       <button
         class="source-copy-button"
         type="button"
-        data-copy-text="${escapeAttribute(buildSourceAutofillScript(record))}"
+        data-copy-text="${escapeAttribute(buildSourceLookupText(record))}"
         data-copy-label="${escapeAttribute(record.name)}"
-        title="Copy a console script that fills Search Products and Select Geography on the Azure Products by Region page"
+        title="Copy the exact product search, geography filter, and in-page find values for the Azure Products by Region page"
       >
-        Copy autofill
+        Copy lookup
       </button>
     </div>
   `;
@@ -498,10 +498,10 @@ async function handleSourceActionClick(event) {
 
   try {
     await navigator.clipboard.writeText(copyText);
-    setStatus(`Copied autofill script for ${label}.`, "good");
+    setStatus(`Copied lookup steps for ${label}.`, "good");
     flashCopiedState(copyButton);
   } catch {
-    setStatus("Failed to copy the autofill script.", "warn");
+    setStatus("Failed to copy the lookup steps.", "warn");
   }
 }
 
@@ -552,36 +552,22 @@ function getSourceLabel(record) {
 }
 
 function getSourceTitle(record) {
-  return `Open Azure Product Availability by Region. Then use the copied autofill script to populate Search Products = ${getSourceProductName(record)} and Geography = ${getGeographyOptionValue(record.region) || "all"}.`;
+  return `Open Azure Product Availability by Region. Then use Search Products = ${getSourceProductName(record)}, Geography = ${getGeographyOptionValue(record.region) || "all"}, and Ctrl/Cmd+F for ${getRegionDisplayName(record.region)}.`;
 }
 
-function buildSourceAutofillScript(record) {
+function buildSourceLookupText(record) {
   const productName = getSourceProductName(record);
   const geographyName = getGeographyOptionValue(record.region) || "all";
 
-  return `(() => {
-  const product = ${JSON.stringify(productName)};
-  const geography = ${JSON.stringify(geographyName)};
-  const productInput = document.getElementById("product-search");
-  const geographySelect = document.getElementById("geography-names");
-
-  if (productInput) {
-    productInput.focus();
-    productInput.value = product;
-    productInput.dispatchEvent(new Event("input", { bubbles: true }));
-  }
-
-  if (geographySelect) {
-    const matchingOption = Array.from(geographySelect.options).find(
-      (option) => option.value === geography || option.text.trim() === geography,
-    );
-
-    if (matchingOption) {
-      geographySelect.value = matchingOption.value;
-      geographySelect.dispatchEvent(new Event("change", { bubbles: true }));
-    }
-  }
-})();`;
+  return [
+    `Page: Azure Product Availability by Region`,
+    `Search Products: ${productName}`,
+    `Select Geography: ${geographyName}`,
+    `Find in page (Ctrl/Cmd+F): ${getRegionDisplayName(record.region)}`,
+    record.name ? `Dashboard offer: ${record.name}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function getGeographyOptionValue(region) {
