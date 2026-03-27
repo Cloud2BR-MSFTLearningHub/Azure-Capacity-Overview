@@ -524,11 +524,10 @@ function renderUpdatesTable(records, rawSearchTerm = "") {
         getSourceProductName(left).localeCompare(getSourceProductName(right)) ||
         getRegionDisplayName(left.region).localeCompare(getRegionDisplayName(right.region))
       );
-    })
-    .slice(0, 12);
+    });
 
   elements.updatesMeta.textContent = updatesRows.length
-    ? `${updatesRows.length} Azure Updates searches ready`
+    ? `${updatesRows.length} Azure Updates search${updatesRows.length === 1 ? "" : "es"} ready`
     : state.allRecords.length
       ? "No Azure Updates rows match the current filters"
       : "No Azure update rows prepared";
