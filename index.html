@@ -12,21 +12,31 @@
     />
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body>
+  <body data-theme="light">
     <div class="page-shell">
       <header class="hero">
         <div>
-          <p class="eyebrow">Static Azure availability dashboard</p>
+          <p class="eyebrow">Azure regional availability planner</p>
           <h1>Azure Capacity Overview</h1>
           <p class="hero-copy">
-            Refresh an overview of Azure regional availability, supported SKUs, and deployment
-            capability signals for new workloads without sign-in or subscription scope.
+            Review Azure regional availability, supported SKUs, and deployment capability
+            signals for new workloads without sign-in or subscription scope.
           </p>
         </div>
 
-        <div class="timestamp-card">
-          <span class="timestamp-label">Last refresh</span>
-          <strong id="last-refresh">Not refreshed yet</strong>
+        <div class="hero-tools">
+          <div class="theme-card" aria-label="Theme selector">
+            <span class="timestamp-label">Theme</span>
+            <div class="theme-switcher" role="group" aria-label="Choose color theme">
+              <button id="theme-light" class="theme-button is-active" type="button">Light</button>
+              <button id="theme-dark" class="theme-button" type="button">Dark</button>
+            </div>
+          </div>
+
+          <div class="timestamp-card">
+            <span class="timestamp-label">Last refresh</span>
+            <strong id="last-refresh">Not refreshed yet</strong>
+          </div>
         </div>
       </header>
 
@@ -34,8 +44,8 @@
         <section class="panel controls-panel">
           <div class="section-heading">
             <div>
-              <p class="section-kicker">Configuration</p>
-              <h2>Overview inputs</h2>
+              <p class="section-kicker">Planning setup</p>
+              <h2>Regions and providers</h2>
             </div>
             <div class="actions-inline">
               <button id="demo-button" class="ghost-button" type="button">Load overview data</button>
@@ -60,7 +70,7 @@
           </div>
 
           <p class="helper-text">
-            Azure does not expose a public global "free capacity left" feed. This dashboard shows an overview of Azure resource availability using a built-in catalog of regions, SKUs, and provider signals without requiring sign-in or subscription scope.
+            Azure does not expose a public global "free capacity left" feed. This dashboard brings together a lightweight regional view of Azure resource availability using a built-in catalog of regions, SKUs, and provider signals.
           </p>
           <p class="helper-links">
             Public Microsoft references:
@@ -73,8 +83,8 @@
         <section class="panel summary-panel">
           <div class="section-heading compact-heading">
             <div>
-              <p class="section-kicker">Current signal</p>
-              <h2>Availability overview</h2>
+              <p class="section-kicker">Snapshot</p>
+              <h2>Regional readiness</h2>
             </div>
             <div id="status-badge" class="status-badge neutral">Awaiting refresh</div>
           </div>
@@ -86,8 +96,8 @@
         <section class="panel insights-panel">
           <div class="section-heading compact-heading">
             <div>
-              <p class="section-kicker">Regional signals</p>
-              <h2>Attention areas</h2>
+              <p class="section-kicker">Watchlist</p>
+              <h2>Regions to review</h2>
             </div>
           </div>
 
@@ -99,8 +109,8 @@
         <section class="panel filters-panel">
           <div class="section-heading compact-heading">
             <div>
-              <p class="section-kicker">Filter view</p>
-              <h2>Catalog filters</h2>
+              <p class="section-kicker">Explore</p>
+              <h2>Search and filters</h2>
             </div>
           </div>
 
@@ -151,8 +161,8 @@
         <section class="panel table-panel">
           <div class="section-heading compact-heading">
             <div>
-              <p class="section-kicker">Detailed availability</p>
-              <h2>Azure availability catalog</h2>
+              <p class="section-kicker">Results</p>
+              <h2>Availability table</h2>
             </div>
             <p id="table-meta" class="table-meta">No availability data loaded</p>
           </div>
@@ -190,7 +200,7 @@
             <h2>Owner and organization</h2>
           </div>
           <p class="identity-copy">
-            Maintained as a lightweight Microsoft Cloud learning asset and published as a static GitHub Pages experience.
+            Maintained as a lightweight Microsoft Cloud learning asset and published as a simple GitHub Pages experience.
           </p>
         </div>
 
@@ -242,7 +252,7 @@
               <li><strong>Format:</strong> Static HTML, CSS, and JavaScript app</li>
               <li><strong>Hosting:</strong> Designed for GitHub Pages</li>
               <li><strong>Verification:</strong> Row-level public Microsoft source links</li>
-              <li><strong>Purpose:</strong> Regional Azure availability planning and review</li>
+              <li><strong>Purpose:</strong> Azure regional planning and availability review</li>
             </ul>
           </article>
         </div>

@@ -13,10 +13,13 @@ const state = {
 };
 
 const elements = {
+  pageBody: document.body,
   providerOptions: document.querySelector("#provider-options"),
   regionsInput: document.querySelector("#regions-input"),
   refreshButton: document.querySelector("#refresh-button"),
   demoButton: document.querySelector("#demo-button"),
+  themeLightButton: document.querySelector("#theme-light"),
+  themeDarkButton: document.querySelector("#theme-dark"),
   lastRefresh: document.querySelector("#last-refresh"),
   statusBadge: document.querySelector("#status-badge"),
   summaryCards: document.querySelector("#summary-cards"),
@@ -35,6 +38,7 @@ const elements = {
 };
 
 async function bootstrap() {
+  applyTheme("light");
   elements.providerOptions.innerHTML = createProviderOptionsMarkup();
   hydrateSavedSettings();
   wireEvents();
@@ -46,6 +50,8 @@ async function bootstrap() {
 function wireEvents() {
   elements.refreshButton.addEventListener("click", refreshData);
   elements.demoButton.addEventListener("click", () => loadDemoData({ source: "overview" }));
+  elements.themeLightButton.addEventListener("click", () => setTheme("light"));
+  elements.themeDarkButton.addEventListener("click", () => setTheme("dark"));
   elements.tableBody.addEventListener("click", handleSourceActionClick);
   elements.priorityList.addEventListener("click", handleSourceActionClick);
 
@@ -75,6 +81,7 @@ function hydrateSavedSettings() {
   try {
     const settings = JSON.parse(raw);
     elements.regionsInput.value = settings.regions ?? "";
+    applyTheme(settings.theme || "light");
 
     if (Array.isArray(settings.providers) && settings.providers.length > 0) {
       for (const checkbox of elements.providerOptions.querySelectorAll('input[type="checkbox"]')) {
@@ -90,9 +97,26 @@ function persistSettings() {
   const settings = {
     regions: elements.regionsInput.value.trim(),
     providers: getSelectedProviderIds(),
+    theme: getCurrentTheme(),
   };
 
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
+function setTheme(theme) {
+  applyTheme(theme);
+  persistSettings();
+}
+
+function applyTheme(theme) {
+  const normalizedTheme = theme === "dark" ? "dark" : "light";
+  elements.pageBody.dataset.theme = normalizedTheme;
+  elements.themeLightButton.classList.toggle("is-active", normalizedTheme === "light");
+  elements.themeDarkButton.classList.toggle("is-active", normalizedTheme === "dark");
+}
+
+function getCurrentTheme() {
+  return elements.pageBody.dataset.theme || "light";
 }
 
 async function refreshData() {
@@ -474,11 +498,11 @@ function renderSourceActions(record) {
       <button
         class="source-copy-button"
         type="button"
-        data-copy-text="${escapeAttribute(buildSourceLookupText(record))}"
+        data-copy-text="${escapeAttribute(buildSourceFilterScript(record))}"
         data-copy-label="${escapeAttribute(record.name)}"
-        title="Copy the exact product search, geography filter, and in-page find values for the Azure Products by Region page"
+        title="Copy a script to filter the Azure Products by Region table inside that page"
       >
-        Copy lookup
+        Copy filter script
       </button>
     </div>
   `;
@@ -498,10 +522,10 @@ async function handleSourceActionClick(event) {
 
   try {
     await navigator.clipboard.writeText(copyText);
-    setStatus(`Copied lookup steps for ${label}.`, "good");
+    setStatus(`Copied filter script for ${label}.`, "good");
     flashCopiedState(copyButton);
   } catch {
-    setStatus("Failed to copy the lookup steps.", "warn");
+    setStatus("Failed to copy the filter script.", "warn");
   }
 }
 
@@ -538,13 +562,7 @@ function getTableColumnCount() {
 }
 
 function getSourceUrl(record) {
-  const fragment = new URLSearchParams({
-    product: getSourceProductName(record),
-    geography: getGeographyName(record.region) || "All",
-    region: getRegionDisplayName(record.region),
-  });
-
-  return `https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/table#${fragment.toString()}`;
+  return "https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/table";
 }
 
 function getSourceLabel(record) {
@@ -552,22 +570,52 @@ function getSourceLabel(record) {
 }
 
 function getSourceTitle(record) {
-  return `Open Azure Product Availability by Region. Then use Search Products = ${getSourceProductName(record)}, Geography = ${getGeographyOptionValue(record.region) || "all"}, and Ctrl/Cmd+F for ${getRegionDisplayName(record.region)}.`;
+  return `Open Azure Product Availability by Region, then use the copied script in that page's DevTools console to set Search Products = ${getSourceProductName(record)} and Geography = ${getGeographyOptionValue(record.region) || "all"}.`;
 }
 
-function buildSourceLookupText(record) {
+function buildSourceFilterScript(record) {
   const productName = getSourceProductName(record);
   const geographyName = getGeographyOptionValue(record.region) || "all";
 
-  return [
-    `Page: Azure Product Availability by Region`,
-    `Search Products: ${productName}`,
-    `Select Geography: ${geographyName}`,
-    `Find in page (Ctrl/Cmd+F): ${getRegionDisplayName(record.region)}`,
-    record.name ? `Dashboard offer: ${record.name}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
+  return `(() => {
+  const product = ${JSON.stringify(productName)};
+  const geography = ${JSON.stringify(geographyName)};
+
+  const applyFilters = () => {
+    const productInput = document.getElementById("product-search");
+    const geographySelect = document.getElementById("geography-names");
+    if (!productInput || !geographySelect) {
+      return false;
+    }
+
+    productInput.focus();
+    productInput.value = product;
+    productInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+    const matchingOption = Array.from(geographySelect.options).find(
+      (option) => option.value === geography || option.text.trim() === geography,
+    );
+
+    if (matchingOption) {
+      geographySelect.value = matchingOption.value;
+      geographySelect.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    return true;
+  };
+
+  if (applyFilters()) {
+    return;
+  }
+
+  const retryInterval = window.setInterval(() => {
+    if (applyFilters()) {
+      window.clearInterval(retryInterval);
+    }
+  }, 300);
+
+  window.setTimeout(() => window.clearInterval(retryInterval), 10000);
+})();`;
 }
 
 function getGeographyOptionValue(region) {
