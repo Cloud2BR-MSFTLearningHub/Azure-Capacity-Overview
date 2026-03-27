@@ -51,6 +51,8 @@ async function bootstrap() {
 function wireEvents() {
   elements.refreshButton.addEventListener("click", refreshData);
   elements.demoButton.addEventListener("click", () => loadDemoData({ source: "overview" }));
+  elements.tableBody.addEventListener("click", handleSourceActionClick);
+  elements.priorityList.addEventListener("click", handleSourceActionClick);
 
   [
     elements.searchInput,
@@ -298,6 +300,9 @@ function enrichRecord(record) {
     ...record,
     availability,
     severity: severityFromAvailability(availability, record.severity),
+    sourceUrl: getSourceUrl(record),
+    sourceLabel: getSourceLabel(record),
+    sourceTitle: getSourceTitle(record),
     searchIndex: [record.providerLabel, record.name, record.resourceType, record.region, record.notes]
       .filter(Boolean)
       .join(" ")
@@ -429,6 +434,7 @@ function renderPriorityList(records) {
           </div>
           <div class="priority-meta">${escapeHtml(record.providerLabel)} · ${escapeHtml(record.resourceType)} · ${escapeHtml(record.region)}</div>
           <p class="priority-footnote">${escapeHtml(record.notes || `${record.metricLabel}: ${record.metricValue}`)}</p>
+          ${renderSourceActions(record)}
         </article>
       `,
     )
@@ -459,10 +465,60 @@ function renderTable(records) {
           <td>${escapeHtml(record.metricLabel)}</td>
           <td>${escapeHtml(formatMetricValue(record.metricValue, record.unit))}</td>
           <td>${escapeHtml(record.notes || "")}</td>
+          <td>${renderSourceActions(record)}</td>
         </tr>
       `,
     )
     .join("");
+}
+
+function renderSourceActions(record) {
+  return `
+    <div class="source-actions">
+      <a class="source-link" href="${escapeAttribute(record.sourceUrl)}" target="_blank" rel="noreferrer" title="${escapeAttribute(record.sourceTitle)}">Open</a>
+      <button
+        class="source-copy-button"
+        type="button"
+        data-copy-url="${escapeAttribute(record.sourceUrl)}"
+        data-copy-label="${escapeAttribute(record.name)}"
+        title="Copy the verification URL for this row"
+      >
+        Copy
+      </button>
+    </div>
+  `;
+}
+
+async function handleSourceActionClick(event) {
+  const copyButton = event.target.closest("[data-copy-url]");
+  if (!copyButton) {
+    return;
+  }
+
+  const url = copyButton.getAttribute("data-copy-url");
+  const label = copyButton.getAttribute("data-copy-label") || "row";
+  if (!url) {
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(url);
+    setStatus(`Copied public source link for ${label}.`, "good");
+    flashCopiedState(copyButton);
+  } catch {
+    setStatus("Failed to copy the public source link.", "warn");
+  }
+}
+
+function flashCopiedState(button) {
+  const originalText = button.textContent;
+  button.textContent = "Copied";
+  button.disabled = true;
+
+  window.setTimeout(() => {
+    button.textContent = originalText;
+    button.disabled = false;
+  }, 1200);
 }
 
 function setLoading(isLoading) {
@@ -483,7 +539,41 @@ function syncScopeVisibility() {
 }
 
 function getTableColumnCount() {
-  return 8;
+  return 9;
+}
+
+function getSourceUrl(record) {
+  const providerPublicSources = {
+    "compute-skus": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+    "sql-capabilities": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+    "cognitive-skus": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+    "web-metadata": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+    "network-metadata": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+    "storage-metadata": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+    "aks-metadata": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+    "postgres-metadata": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+    "mysql-metadata": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+    "cosmos-metadata": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+    "cache-metadata": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+    "search-metadata": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+    "eventhub-metadata": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+    "servicebus-metadata": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+    "keyvault-metadata": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+    "app-metadata": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+    "signalr-metadata": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+    "ml-metadata": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+    "databricks-metadata": "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table",
+  };
+
+  return providerPublicSources[record.providerId] || "https://azure.microsoft.com/explore/global-infrastructure/products-by-region/table";
+}
+
+function getSourceLabel(record) {
+  return "Public source";
+}
+
+function getSourceTitle(record) {
+  return `Open Microsoft's public Azure regional availability references to verify ${record.providerLabel} in ${record.region}. These links are not subscription-scoped.`;
 }
 
 function getSelectedProviderIds() {
@@ -563,6 +653,10 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value);
 }
 
 function capitalize(value) {

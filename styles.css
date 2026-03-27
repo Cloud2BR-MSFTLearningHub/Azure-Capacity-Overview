@@ -115,6 +115,57 @@ h2 {
   font-size: 0.92rem;
 }
 
+.helper-links {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.helper-links a {
+  color: var(--accent-strong);
+  margin-left: 8px;
+}
+
+.helper-links a:hover {
+  color: var(--accent);
+}
+
+.source-link {
+  color: var(--accent-strong);
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.16em;
+}
+
+.source-link:hover {
+  color: var(--accent);
+}
+
+.source-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.source-copy-button {
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.08);
+  color: var(--accent-strong);
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.source-copy-button:hover {
+  background: rgba(15, 118, 110, 0.14);
+}
+
+.source-copy-button:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
