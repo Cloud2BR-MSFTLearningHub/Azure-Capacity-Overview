@@ -332,6 +332,18 @@ function loadDemoData(options = {}) {
 
 function enrichRecord(record) {
   const availability = record.availability || "available";
+  const searchContent = [
+    record.providerLabel,
+    record.name,
+    record.resourceType,
+    record.region,
+    getRegionDisplayName(record.region),
+    getSourceProductName(record),
+    getPlanningSignalLabel({ ...record, availability }),
+    record.notes,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return {
     ...record,
@@ -340,10 +352,9 @@ function enrichRecord(record) {
     sourceUrl: getSourceUrl(record),
     sourceLabel: getSourceLabel(record),
     sourceTitle: getSourceTitle(record),
-    searchIndex: [record.providerLabel, record.name, record.resourceType, record.region, record.notes]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase(),
+    searchIndex: searchContent.toLowerCase(),
+    searchNeedle: normalizeSearchValue(searchContent),
+    searchCompact: compactSearchValue(searchContent),
   };
 }
 
@@ -399,7 +410,7 @@ function applyFilters() {
       return false;
     }
 
-    if (searchTerm && !record.searchIndex.includes(searchTerm)) {
+    if (searchTerm && !matchesSearch(record, searchTerm)) {
       return false;
     }
 
@@ -447,7 +458,12 @@ function renderUpdatesTable(records) {
         <tr>
           <td><span class="risk-pill ${record.availability}">${escapeHtml(record.planningSignalLabel)}</span></td>
           <td>${escapeHtml(getSourceProductName(record))}</td>
-          <td>${escapeHtml(record.name)}</td>
+          <td>
+            <div class="search-term-cell">
+              <span class="search-term-chip">${escapeHtml(getUpdatesSearchTerm(record))}</span>
+              <span class="search-term-note">Paste-ready term for Azure Updates</span>
+            </div>
+          </td>
           <td>${escapeHtml(getRegionDisplayName(record.region))}</td>
           <td>${escapeHtml(record.notes || "")}</td>
           <td>
@@ -456,13 +472,16 @@ function renderUpdatesTable(records) {
               <button
                 class="source-copy-button"
                 type="button"
-                data-copy-text="${escapeAttribute(getSourceProductName(record))}"
-                data-copy-label="${escapeAttribute(getSourceProductName(record))}"
+                data-copy-text="${escapeAttribute(getUpdatesSearchTerm(record))}"
+                data-copy-label="${escapeAttribute(getUpdatesSearchTerm(record))}"
                 data-copy-success="Copied Azure Updates search term for ${escapeAttribute(record.name)}."
                 data-copy-failure="Failed to copy the Azure Updates search term."
+                data-default-content="📋"
+                data-copied-content="✓"
+                aria-label="Copy Azure Updates search term"
                 title="Copy the exact Azure Updates search term"
               >
-                Copy search term
+                📋
               </button>
             </div>
           </td>
@@ -546,9 +565,12 @@ function renderSourceActions(record) {
         data-copy-label="${escapeAttribute(getSourceProductName(record))}"
         data-copy-success="Copied product search term for ${escapeAttribute(record.name)}."
         data-copy-failure="Failed to copy the product search term."
+        data-default-content="📋"
+        data-copied-content="✓"
+        aria-label="Copy product search term"
         title="Copy the exact product term to paste into the Microsoft Products by Region search box"
       >
-        Copy product
+        📋
       </button>
       <button
         class="source-copy-button"
@@ -557,9 +579,12 @@ function renderSourceActions(record) {
         data-copy-label="${escapeAttribute(record.name)}"
         data-copy-success="Copied verification note for ${escapeAttribute(record.name)}."
         data-copy-failure="Failed to copy the verification note."
+        data-default-content="📋"
+        data-copied-content="✓"
+        aria-label="Copy verification note"
         title="Copy the product, geography, region, and source links needed to verify this row"
       >
-        Copy verify note
+        📋
       </button>
       <p class="source-context">${escapeHtml(getSourceContext(record))}</p>
     </div>
@@ -590,12 +615,13 @@ async function handleSourceActionClick(event) {
 }
 
 function flashCopiedState(button) {
-  const originalText = button.textContent;
-  button.textContent = "Copied";
+  const originalContent = button.innerHTML;
+  const copiedContent = button.getAttribute("data-copied-content") || "Copied";
+  button.innerHTML = copiedContent;
   button.disabled = true;
 
   window.setTimeout(() => {
-    button.textContent = originalText;
+    button.innerHTML = button.getAttribute("data-default-content") || originalContent;
     button.disabled = false;
   }, 1200);
 }
@@ -726,8 +752,13 @@ function getSourceTitle(record) {
 }
 
 function getUpdatesUrl(record) {
-  const productName = encodeURIComponent(getSourceProductName(record));
-  return `https://azure.microsoft.com/en-us/updates/?searchterms=${productName}`;
+  const url = new URL("https://azure.microsoft.com/en-us/updates/");
+  url.searchParams.set("searchterms", getUpdatesSearchTerm(record));
+  return url.toString();
+}
+
+function getUpdatesSearchTerm(record) {
+  return getSourceProductName(record);
 }
 
 function getUpdatesTitle(record) {
@@ -912,6 +943,58 @@ function parseList(rawValue) {
     .split(/[\n,]/)
     .map((value) => value.trim())
     .filter(Boolean);
+}
+
+function matchesSearch(record, rawQuery) {
+  const normalizedQuery = normalizeSearchValue(rawQuery);
+  if (!normalizedQuery) {
+    return true;
+  }
+
+  if (record.searchIndex.includes(rawQuery) || record.searchNeedle.includes(normalizedQuery)) {
+    return true;
+  }
+
+  const queryTokens = normalizedQuery.split(" ").filter(Boolean);
+  if (!queryTokens.length) {
+    return true;
+  }
+
+  if (queryTokens.every((token) => record.searchNeedle.includes(token))) {
+    return true;
+  }
+
+  return queryTokens.every((token) => isSubsequence(token, record.searchCompact));
+}
+
+function normalizeSearchValue(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function compactSearchValue(value) {
+  return normalizeSearchValue(value).replace(/\s+/g, "");
+}
+
+function isSubsequence(needle, haystack) {
+  if (!needle) {
+    return true;
+  }
+
+  let needleIndex = 0;
+  for (const char of haystack) {
+    if (char === needle[needleIndex]) {
+      needleIndex += 1;
+      if (needleIndex === needle.length) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 function setSelectOptions(select, values, allLabel) {
