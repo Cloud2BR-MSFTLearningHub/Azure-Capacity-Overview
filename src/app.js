@@ -1,7 +1,28 @@
 import { PROVIDERS, createProviderOptionsMarkup } from "./providers.js";
 
 const SETTINGS_KEY = "azure-capacity-overview-settings";
-const DEFAULT_REGIONS = ["eastus", "westeurope", "centralus"];
+const DELTA_SNAPSHOT_KEY = "azure-capacity-delta-snapshot";
+
+// All major Azure regions used in the overview catalog
+const DEFAULT_REGIONS = [
+  // United States
+  "eastus", "eastus2", "westus", "westus2", "westus3",
+  "centralus", "northcentralus", "southcentralus",
+  // Canada
+  "canadacentral", "canadaeast",
+  // Brazil
+  "brazilsouth",
+  // Europe
+  "westeurope", "northeurope", "uksouth", "francecentral",
+  "germanywestcentral", "swedencentral", "norwayeast",
+  // Asia Pacific
+  "southeastasia", "eastasia", "australiaeast", "japaneast",
+  "koreacentral", "centralindia",
+  // Middle East
+  "uaenorth", "qatarcentral",
+  // Africa
+  "southafricanorth",
+];
 
 const state = {
   allRecords: [],
@@ -163,141 +184,393 @@ async function refreshData() {
   }
 }
 
+// ── Region tiers reflecting typical Microsoft GA rollout patterns ─────────────
+// Tier 1: Core – earliest GA, maximum feature coverage
+const _RT1 = ["eastus", "eastus2", "westus2", "westeurope", "uksouth", "southeastasia", "australiaeast", "japaneast"];
+// Tier 2: Major – mainstream GA, most services available
+const _RT2 = ["westus", "westus3", "centralus", "northeurope", "francecentral", "koreacentral", "canadacentral", "centralindia"];
+// Tier 3: Secondary – mix of GA and preview rollouts
+const _RT3 = ["northcentralus", "southcentralus", "canadaeast", "brazilsouth", "germanywestcentral", "swedencentral", "norwayeast", "eastasia"];
+// Tier 4: Emerging – newer regions, often preview-only for advanced services
+const _RT4 = ["uaenorth", "qatarcentral", "southafricanorth"];
+
+/**
+ * Build an availabilityByRegion map from explicit region lists.
+ * Each entry is [availability, notes].
+ */
+function buildAvailabilityMap(available = [], preview = [], restricted = [], notes = {}) {
+  const map = {};
+  const an = notes.available || "Supported in this region";
+  const pn = notes.preview || "In preview or staged regional rollout";
+  const rn = notes.restricted || "Access restricted or requires approval";
+  for (const r of available) map[r] = ["available", an];
+  for (const r of preview) map[r] = ["preview", pn];
+  for (const r of restricted) map[r] = ["restricted", rn];
+  return map;
+}
+
+// ── Expanded overview catalog – all 19 providers, 27 regions ─────────────────
+const OVERVIEW_CATALOG = [
+  // ── Compute SKUs ────────────────────────────────────────────────────────────
+  {
+    providerId: "compute-skus", providerLabel: "Compute SKUs",
+    name: "Standard_D8s_v5", resourceType: "virtualMachines",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, _RT4, {
+      available: "8 vCPUs · 32 GB RAM · Zone-redundant deployment supported",
+      preview: "8 vCPUs · 32 GB RAM · Staged regional rollout",
+      restricted: "Not available in this region",
+    }),
+  },
+  {
+    providerId: "compute-skus", providerLabel: "Compute SKUs",
+    name: "Standard_D32s_v5", resourceType: "virtualMachines",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, _RT4, {
+      available: "32 vCPUs · 128 GB RAM · Zone-redundant deployment supported",
+      preview: "32 vCPUs · 128 GB RAM · Staged regional rollout",
+      restricted: "Not available in this region",
+    }),
+  },
+  {
+    providerId: "compute-skus", providerLabel: "Compute SKUs",
+    name: "Standard_E8s_v5", resourceType: "virtualMachines",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, _RT4, {
+      available: "8 vCPUs · 64 GB RAM · Memory-optimized · Zone-redundant",
+      preview: "8 vCPUs · 64 GB RAM · Memory-optimized · Staged rollout",
+      restricted: "Not available in this region",
+    }),
+  },
+  {
+    providerId: "compute-skus", providerLabel: "Compute SKUs",
+    name: "Standard_F8s_v2", resourceType: "virtualMachines",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, _RT4, {
+      available: "8 vCPUs · 16 GB RAM · Compute-optimized",
+      preview: "8 vCPUs · 16 GB RAM · Staged regional rollout",
+      restricted: "Not available in this region",
+    }),
+  },
+  {
+    providerId: "compute-skus", providerLabel: "Compute SKUs",
+    name: "Standard_NC24ads_A100_v4", resourceType: "virtualMachines",
+    availabilityByRegion: buildAvailabilityMap(
+      ["eastus", "westus2", "southeastasia", "westeurope", "japaneast"],
+      ["eastus2", "westus3", "australiaeast", "uksouth", "francecentral"],
+      ["westus", "centralus", "northeurope", "koreacentral", "canadacentral", "centralindia",
+       "northcentralus", "southcentralus", "canadaeast", "brazilsouth", "germanywestcentral",
+       "swedencentral", "norwayeast", "eastasia", "uaenorth", "qatarcentral", "southafricanorth"],
+      {
+        available: "24 vCPUs · 1× NVIDIA A100 80 GB · GPU-accelerated compute",
+        preview: "A100 GPU rolling out · Limited regional quota",
+        restricted: "A100 GPU not available in this region",
+      }
+    ),
+  },
+  {
+    providerId: "compute-skus", providerLabel: "Compute SKUs",
+    name: "Standard_ND96asr_v4", resourceType: "virtualMachines",
+    availabilityByRegion: buildAvailabilityMap(
+      ["eastus", "westus2", "westeurope"],
+      ["southeastasia", "australiaeast", "japaneast", "eastus2"],
+      ["westus", "westus3", "centralus", "northeurope", "francecentral", "koreacentral",
+       "canadacentral", "centralindia", "northcentralus", "southcentralus", "canadaeast",
+       "brazilsouth", "germanywestcentral", "swedencentral", "norwayeast", "eastasia",
+       "uksouth", "uaenorth", "qatarcentral", "southafricanorth"],
+      {
+        available: "96 vCPUs · 8× NVIDIA A100 · HPC GPU cluster",
+        preview: "ND96asr_v4 in limited preview",
+        restricted: "ND96asr_v4 not available in this region",
+      }
+    ),
+  },
+  // ── SQL Capabilities ────────────────────────────────────────────────────────
+  {
+    providerId: "sql-capabilities", providerLabel: "SQL Capabilities",
+    name: "BusinessCritical BC_Gen5_16", resourceType: "servers/databases",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, _RT4, {
+      available: "BusinessCritical · Gen5 · 16 vCores · Zone redundant available",
+      preview: "BusinessCritical · Staged regional rollout",
+      restricted: "BusinessCritical not available in this region",
+    }),
+  },
+  {
+    providerId: "sql-capabilities", providerLabel: "SQL Capabilities",
+    name: "GeneralPurpose GP_Gen5_8", resourceType: "servers/databases",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3], _RT4, [], {
+      available: "GeneralPurpose · Gen5 · 8 vCores · Standard regional availability",
+      preview: "GeneralPurpose · Limited preview in this region",
+    }),
+  },
+  {
+    providerId: "sql-capabilities", providerLabel: "SQL Capabilities",
+    name: "Hyperscale HS_Gen5_4", resourceType: "servers/databases",
+    availabilityByRegion: buildAvailabilityMap(_RT1, [..._RT2, ..._RT3], _RT4, {
+      available: "Hyperscale · Distributed storage architecture · Up to 100 TB",
+      preview: "Hyperscale in preview or limited rollout",
+      restricted: "Hyperscale not available in this region",
+    }),
+  },
+  // ── Cognitive / AI Services ─────────────────────────────────────────────────
+  {
+    providerId: "cognitive-skus", providerLabel: "Cognitive Services SKUs",
+    name: "OpenAI GPT-4o S0", resourceType: "accounts",
+    availabilityByRegion: buildAvailabilityMap(
+      ["eastus", "eastus2", "westus", "westeurope", "swedencentral", "uksouth", "southeastasia", "australiaeast"],
+      ["francecentral", "japaneast", "canadacentral", "koreacentral", "norwayeast"],
+      ["westus2", "westus3", "centralus", "northeurope", "centralindia", "northcentralus",
+       "southcentralus", "canadaeast", "brazilsouth", "germanywestcentral", "eastasia",
+       "uaenorth", "qatarcentral", "southafricanorth"],
+      {
+        available: "Azure OpenAI GPT-4o · Standard tier · Regional deployment",
+        preview: "Azure OpenAI GPT-4o in limited preview",
+        restricted: "Azure OpenAI not available in this region",
+      }
+    ),
+  },
+  {
+    providerId: "cognitive-skus", providerLabel: "Cognitive Services SKUs",
+    name: "OpenAI S0", resourceType: "accounts",
+    availabilityByRegion: buildAvailabilityMap(
+      ["eastus", "eastus2", "westus", "westeurope", "swedencentral", "uksouth", "southeastasia", "australiaeast", "francecentral", "japaneast"],
+      ["canadacentral", "koreacentral", "norwayeast", "centralindia", "westus2"],
+      ["westus3", "centralus", "northeurope", "northcentralus", "southcentralus",
+       "canadaeast", "brazilsouth", "germanywestcentral", "eastasia",
+       "uaenorth", "qatarcentral", "southafricanorth"],
+      {
+        available: "Azure OpenAI · Standard tier · Regional AI endpoint",
+        preview: "Azure OpenAI in limited preview or rollout",
+        restricted: "Azure OpenAI not available in this region",
+      }
+    ),
+  },
+  {
+    providerId: "cognitive-skus", providerLabel: "Cognitive Services SKUs",
+    name: "Azure AI Services S0", resourceType: "accounts",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], [..._RT3, ..._RT4], [], {
+      available: "Azure AI Services · Speech, Vision, Language · Standard tier",
+      preview: "Azure AI Services in preview in this region",
+    }),
+  },
+  // ── App Service ─────────────────────────────────────────────────────────────
+  {
+    providerId: "web-metadata", providerLabel: "App Service",
+    name: "sites", resourceType: "sites",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3], _RT4, [], {
+      available: "App Service · Linux and Windows · Zone-redundant deployment",
+      preview: "App Service in preview in this region",
+    }),
+  },
+  // ── AKS ─────────────────────────────────────────────────────────────────────
+  {
+    providerId: "aks-metadata", providerLabel: "AKS",
+    name: "managedClusters", resourceType: "managedClusters",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], [..._RT3, ..._RT4], [], {
+      available: "AKS · Managed Kubernetes · Zone-redundant node pools",
+      preview: "AKS · Staged feature rollout in this region",
+    }),
+  },
+  // ── Storage ─────────────────────────────────────────────────────────────────
+  {
+    providerId: "storage-metadata", providerLabel: "Storage",
+    name: "storageAccounts", resourceType: "storageAccounts",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3, ..._RT4], [], [], {
+      available: "Azure Storage · ZRS, LRS, GRS · Standard and Premium tiers",
+    }),
+  },
+  {
+    providerId: "storage-metadata", providerLabel: "Storage",
+    name: "Premium File Share", resourceType: "storageAccounts",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, _RT4, {
+      available: "Azure Files Premium · High-throughput NFS and SMB shares",
+      preview: "Premium File Share in preview in this region",
+      restricted: "Premium File Share not available in this region",
+    }),
+  },
+  // ── Network ─────────────────────────────────────────────────────────────────
+  {
+    providerId: "network-metadata", providerLabel: "Network",
+    name: "publicIPAddresses", resourceType: "publicIPAddresses",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3, ..._RT4], [], [], {
+      available: "Public IP · Standard and Basic SKUs · Zone-redundant in supported regions",
+    }),
+  },
+  {
+    providerId: "network-metadata", providerLabel: "Network",
+    name: "applicationGateways", resourceType: "applicationGateways",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3], _RT4, [], {
+      available: "Application Gateway · WAF v2 · Zone-redundant",
+      preview: "Application Gateway in preview in this region",
+    }),
+  },
+  // ── Cosmos DB ───────────────────────────────────────────────────────────────
+  {
+    providerId: "cosmos-metadata", providerLabel: "Cosmos DB",
+    name: "databaseAccounts (NoSQL)", resourceType: "databaseAccounts",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], [..._RT3, ..._RT4], [], {
+      available: "Cosmos DB · NoSQL API · Multi-region writes · Zone redundant",
+      preview: "Cosmos DB · Staged rollout in this region",
+    }),
+  },
+  {
+    providerId: "cosmos-metadata", providerLabel: "Cosmos DB",
+    name: "databaseAccounts (MongoDB)", resourceType: "databaseAccounts",
+    availabilityByRegion: buildAvailabilityMap(_RT1, [..._RT2, ..._RT3], _RT4, {
+      available: "Cosmos DB for MongoDB · RU-based or vCore · Serverless option",
+      preview: "Cosmos DB for MongoDB in preview",
+      restricted: "Cosmos DB for MongoDB not available in this region",
+    }),
+  },
+  // ── Key Vault ───────────────────────────────────────────────────────────────
+  {
+    providerId: "keyvault-metadata", providerLabel: "Key Vault",
+    name: "vaults (Standard)", resourceType: "vaults",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3, ..._RT4], [], [], {
+      available: "Key Vault · Secrets, Keys, Certificates · Soft-delete enabled",
+    }),
+  },
+  {
+    providerId: "keyvault-metadata", providerLabel: "Key Vault",
+    name: "managedHSMs", resourceType: "managedHSMs",
+    availabilityByRegion: buildAvailabilityMap(_RT1, _RT2, [..._RT3, ..._RT4], {
+      available: "Managed HSM · FIPS 140-2 Level 3 · Single-tenant HSM pool",
+      preview: "Managed HSM in preview in this region",
+      restricted: "Managed HSM not available in this region",
+    }),
+  },
+  // ── PostgreSQL ──────────────────────────────────────────────────────────────
+  {
+    providerId: "postgres-metadata", providerLabel: "PostgreSQL",
+    name: "flexibleServers", resourceType: "flexibleServers",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], [..._RT3, ..._RT4], [], {
+      available: "PostgreSQL Flexible Server · Zone-redundant HA · Burstable and GP tiers",
+      preview: "PostgreSQL Flexible Server in preview in this region",
+    }),
+  },
+  // ── MySQL ───────────────────────────────────────────────────────────────────
+  {
+    providerId: "mysql-metadata", providerLabel: "MySQL",
+    name: "flexibleServers", resourceType: "flexibleServers",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], [..._RT3, ..._RT4], [], {
+      available: "MySQL Flexible Server · Zone-redundant HA · Burstable and GP tiers",
+      preview: "MySQL Flexible Server in preview in this region",
+    }),
+  },
+  // ── Event Hubs ──────────────────────────────────────────────────────────────
+  {
+    providerId: "eventhub-metadata", providerLabel: "Event Hubs",
+    name: "namespaces (Standard)", resourceType: "namespaces",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3], _RT4, [], {
+      available: "Event Hubs Standard · 10 consumer groups · Kafka protocol supported",
+      preview: "Event Hubs in preview in this region",
+    }),
+  },
+  {
+    providerId: "eventhub-metadata", providerLabel: "Event Hubs",
+    name: "namespaces (Dedicated)", resourceType: "namespaces",
+    availabilityByRegion: buildAvailabilityMap(_RT1, [..._RT2, ..._RT3], _RT4, {
+      available: "Event Hubs Dedicated · Single-tenant cluster · Zone-redundant",
+      preview: "Event Hubs Dedicated in preview in this region",
+      restricted: "Event Hubs Dedicated not available in this region",
+    }),
+  },
+  // ── Service Bus ─────────────────────────────────────────────────────────────
+  {
+    providerId: "servicebus-metadata", providerLabel: "Service Bus",
+    name: "namespaces (Standard)", resourceType: "namespaces",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3], _RT4, [], {
+      available: "Service Bus Standard · Queues and Topics · 256 KB message size",
+      preview: "Service Bus in preview in this region",
+    }),
+  },
+  {
+    providerId: "servicebus-metadata", providerLabel: "Service Bus",
+    name: "namespaces (Premium)", resourceType: "namespaces",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, _RT4, {
+      available: "Service Bus Premium · Dedicated messaging units · Zone-redundant",
+      preview: "Service Bus Premium in preview in this region",
+      restricted: "Service Bus Premium not available in this region",
+    }),
+  },
+  // ── Redis Cache ─────────────────────────────────────────────────────────────
+  {
+    providerId: "cache-metadata", providerLabel: "Redis Cache",
+    name: "redis (Standard)", resourceType: "redis",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3], _RT4, [], {
+      available: "Azure Cache for Redis · Standard C1–C6 · In-memory replication",
+      preview: "Redis Cache in preview in this region",
+    }),
+  },
+  {
+    providerId: "cache-metadata", providerLabel: "Redis Cache",
+    name: "redis (Enterprise)", resourceType: "redis",
+    availabilityByRegion: buildAvailabilityMap(_RT1, _RT2, [..._RT3, ..._RT4], {
+      available: "Redis Enterprise · Active geo-replication · RediSearch and JSON modules",
+      preview: "Redis Enterprise in preview in this region",
+      restricted: "Redis Enterprise not available in this region",
+    }),
+  },
+  // ── AI Search ───────────────────────────────────────────────────────────────
+  {
+    providerId: "search-metadata", providerLabel: "AI Search",
+    name: "searchServices", resourceType: "searchServices",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], [..._RT3, ..._RT4], [], {
+      available: "Azure AI Search · Vector + semantic search · Standard and Premium tiers",
+      preview: "AI Search in preview in this region",
+    }),
+  },
+  // ── Machine Learning ────────────────────────────────────────────────────────
+  {
+    providerId: "ml-metadata", providerLabel: "Machine Learning",
+    name: "workspaces", resourceType: "workspaces",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, _RT4, {
+      available: "Azure Machine Learning · Managed compute · Pipeline orchestration",
+      preview: "Azure ML in preview or staged rollout",
+      restricted: "Azure ML not available in this region",
+    }),
+  },
+  // ── Databricks ──────────────────────────────────────────────────────────────
+  {
+    providerId: "databricks-metadata", providerLabel: "Databricks",
+    name: "workspaces", resourceType: "workspaces",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, _RT4, {
+      available: "Azure Databricks · Unity Catalog · Lakehouse platform",
+      preview: "Databricks in preview or staged rollout",
+      restricted: "Databricks not available in this region",
+    }),
+  },
+  // ── Container Apps ──────────────────────────────────────────────────────────
+  {
+    providerId: "app-metadata", providerLabel: "Azure App",
+    name: "managedEnvironments", resourceType: "managedEnvironments",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], [..._RT3, ..._RT4], [], {
+      available: "Container Apps · Serverless containers · KEDA autoscaling",
+      preview: "Container Apps in preview in this region",
+    }),
+  },
+  // ── SignalR ─────────────────────────────────────────────────────────────────
+  {
+    providerId: "signalr-metadata", providerLabel: "SignalR",
+    name: "webPubSub", resourceType: "webPubSub",
+    availabilityByRegion: buildAvailabilityMap(_RT1, [..._RT2, ..._RT3], _RT4, {
+      available: "Azure Web PubSub · Standard and Premium · High-concurrency messaging",
+      preview: "Web PubSub in preview in this region",
+      restricted: "Web PubSub not available in this region",
+    }),
+  },
+];
+
 function loadDemoData(options = {}) {
   const source = options.source || "demo";
   const selectedProviders = new Set(options.providerIds || PROVIDERS.map((provider) => provider.id));
-  const regions = options.regions?.length ? options.regions : DEFAULT_REGIONS;
   const overviewScope = "overview";
 
-  const catalog = [
-    {
-      providerId: "compute-skus",
-      providerLabel: "Compute SKUs",
-      name: "Standard_D8s_v5",
-      resourceType: "virtualMachines",
-      metricLabel: "vCPUs",
-      metricValue: 8,
-      unit: "vCPUs",
-      availabilityByRegion: {
-        eastus: ["available", "8 vCPUs · 32 GB RAM · 3 zones"],
-        westeurope: ["available", "8 vCPUs · 32 GB RAM · 3 zones"],
-        centralus: ["available", "8 vCPUs · 32 GB RAM · 3 zones"],
-      },
-    },
-    {
-      providerId: "compute-skus",
-      providerLabel: "Compute SKUs",
-      name: "Standard_NC24ads_A100_v4",
-      resourceType: "virtualMachines",
-      metricLabel: "GPUs",
-      metricValue: 1,
-      unit: "GPU",
-      availabilityByRegion: {
-        eastus: ["available", "A100 available"],
-        westeurope: ["available", "A100 available"],
-        centralus: ["restricted", "Restricted in this region"],
-      },
-    },
-    {
-      providerId: "sql-capabilities",
-      providerLabel: "SQL Capabilities",
-      name: "BusinessCritical BC_Gen5_16",
-      resourceType: "servers/databases",
-      metricLabel: "VCores",
-      metricValue: 16,
-      unit: "VCores",
-      availabilityByRegion: {
-        eastus: ["available", "BusinessCritical · zone redundant"],
-        westeurope: ["available", "BusinessCritical · zone redundant"],
-        centralus: ["preview", "Available with staged regional rollout"],
-      },
-    },
-    {
-      providerId: "cognitive-skus",
-      providerLabel: "Cognitive Services SKUs",
-      name: "OpenAI S0",
-      resourceType: "accounts",
-      metricLabel: "SKU tier",
-      metricValue: "Standard",
-      unit: "",
-      availabilityByRegion: {
-        eastus: ["available", "Regional AI offer"],
-        westeurope: ["preview", "Regional AI offer in limited rollout"],
-        centralus: ["available", "Regional AI offer"],
-      },
-    },
-    {
-      providerId: "web-metadata",
-      providerLabel: "App Service",
-      name: "sites",
-      resourceType: "sites",
-      metricLabel: "Zones",
-      metricValue: 3,
-      unit: "zones",
-      availabilityByRegion: {
-        eastus: ["available", "Supports tags and multi-zone deployment"],
-        westeurope: ["available", "Supports tags and multi-zone deployment"],
-        centralus: ["available", "Supports tags and multi-zone deployment"],
-      },
-    },
-    {
-      providerId: "aks-metadata",
-      providerLabel: "AKS",
-      name: "managedClusters",
-      resourceType: "managedClusters",
-      metricLabel: "Zones",
-      metricValue: 3,
-      unit: "zones",
-      availabilityByRegion: {
-        eastus: ["available", "Managed clusters regional metadata"],
-        westeurope: ["preview", "Managed clusters with staged feature rollout"],
-        centralus: ["preview", "Managed clusters with staged feature rollout"],
-      },
-    },
-    {
-      providerId: "storage-metadata",
-      providerLabel: "Storage",
-      name: "storageAccounts",
-      resourceType: "storageAccounts",
-      metricLabel: "Zones",
-      metricValue: 3,
-      unit: "zones",
-      availabilityByRegion: {
-        eastus: ["available", "ZRS-capable regional metadata"],
-        westeurope: ["available", "ZRS-capable regional metadata"],
-        centralus: ["available", "ZRS-capable regional metadata"],
-      },
-    },
-    {
-      providerId: "network-metadata",
-      providerLabel: "Network",
-      name: "publicIPAddresses",
-      resourceType: "publicIPAddresses",
-      metricLabel: "API version",
-      metricValue: "2024-01-01",
-      unit: "",
-      availabilityByRegion: {
-        eastus: ["available", "Regional network resource metadata"],
-        westeurope: ["available", "Regional network resource metadata"],
-        centralus: ["available", "Regional network resource metadata"],
-      },
-    },
-  ];
+  const previousSnapshot = loadDeltaSnapshot();
 
   const demoRows = [];
-
-  for (const item of catalog) {
+  for (const item of OVERVIEW_CATALOG) {
     if (!selectedProviders.has(item.providerId)) {
       continue;
     }
-
-    for (const region of regions) {
-      const regionalSignal = item.availabilityByRegion[region];
-      if (!regionalSignal) {
-        continue;
-      }
-
-      const [availability, notes] = regionalSignal;
+    for (const [region, signal] of Object.entries(item.availabilityByRegion)) {
+      const [availability, notes] = signal;
       demoRows.push({
         providerId: item.providerId,
         providerLabel: item.providerLabel,
@@ -305,9 +578,9 @@ function loadDemoData(options = {}) {
         region,
         name: item.name,
         resourceType: item.resourceType,
-        metricLabel: item.metricLabel,
-        metricValue: item.metricValue,
-        unit: item.unit,
+        metricLabel: "",
+        metricValue: "",
+        unit: "",
         availability,
         notes,
         sourceType: "overview",
@@ -315,21 +588,60 @@ function loadDemoData(options = {}) {
     }
   }
 
-  state.allRecords = demoRows.map(enrichRecord).sort(sortAvailabilityRecords);
+  const enriched = demoRows.map(enrichRecord).sort(sortAvailabilityRecords);
+  state.allRecords = annotateWithDelta(enriched, previousSnapshot);
+  saveDeltaSnapshot(state.allRecords);
+
   state.dataMode = "overview";
-  state.regionsScanned = regions.length;
+  state.regionsScanned = new Set(demoRows.map((r) => r.region)).size;
   state.lastRefresh = new Date();
   elements.lastRefresh.textContent = `${formatDateTime(state.lastRefresh)} ${source}`;
 
   syncScopeVisibility();
   populateFilterOptions(state.allRecords);
   applyFilters();
+
+  const newCount = state.allRecords.filter((r) => r.delta === "new").length;
+  const changedCount = state.allRecords.filter((r) => r.delta === "changed").length;
+  const deltaText = previousSnapshot
+    ? newCount + changedCount > 0
+      ? ` · ${[newCount > 0 ? `${newCount} new` : "", changedCount > 0 ? `${changedCount} changed` : ""].filter(Boolean).join(", ")}`
+      : " · No changes since last refresh"
+    : "";
+
   setStatus(
-    source === "overview"
-      ? "Azure availability overview refreshed. No sign-in or subscription scope is required."
-      : "Overview sample data loaded.",
+    `${state.allRecords.length} records across ${state.regionsScanned} regions${deltaText}.`,
     "good",
   );
+}
+
+// ── Delta tracking: snapshot-based change detection across refreshes ──────────
+
+function saveDeltaSnapshot(records) {
+  const snapshot = {};
+  for (const r of records) {
+    snapshot[`${r.providerId}::${r.name}::${r.region}`] = `${r.availability}::${r.notes}`;
+  }
+  try { localStorage.setItem(DELTA_SNAPSHOT_KEY, JSON.stringify(snapshot)); } catch (_) {}
+}
+
+function loadDeltaSnapshot() {
+  try {
+    const raw = localStorage.getItem(DELTA_SNAPSHOT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) { return null; }
+}
+
+function annotateWithDelta(records, snapshot) {
+  if (!snapshot) {
+    return records.map((r) => ({ ...r, delta: "new" }));
+  }
+  return records.map((r) => {
+    const key = `${r.providerId}::${r.name}::${r.region}`;
+    const prev = snapshot[key];
+    if (!prev) return { ...r, delta: "new" };
+    return { ...r, delta: prev === `${r.availability}::${r.notes}` ? "same" : "changed" };
+  });
 }
 
 function enrichRecord(record) {
@@ -597,7 +909,7 @@ function renderTable(records, rawSearchTerm = "") {
     .map(
       (record) => `
         <tr class="${rawSearchTerm ? "search-match-row" : ""}">
-          <td><span class="risk-pill ${record.availability}">${capitalize(record.availability)}</span></td>
+          <td><span class="risk-pill ${record.availability}">${capitalize(record.availability)}</span>${record.delta === "new" ? ' <span class="delta-badge delta-new" title="New since last refresh">New</span>' : record.delta === "changed" ? ' <span class="delta-badge delta-changed" title="Changed since last refresh">Changed</span>' : ""}</td>
           <td>${renderHighlightedText(getSourceProductName(record), rawSearchTerm)}</td>
           <td>${renderHighlightedText(record.providerLabel, rawSearchTerm)}</td>
           <td>${renderHighlightedText(record.resourceType, rawSearchTerm)}</td>

@@ -835,6 +835,27 @@ textarea {
   color: var(--critical);
 }
 
+.delta-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  vertical-align: middle;
+  margin-left: 5px;
+  letter-spacing: 0.04em;
+}
+.delta-badge.delta-new {
+  background: color-mix(in oklab, var(--accent) 14%, transparent);
+  color: var(--accent-strong);
+  border: 1px solid color-mix(in oklab, var(--accent) 28%, transparent);
+}
+.delta-badge.delta-changed {
+  background: rgba(181, 71, 8, 0.1);
+  color: #b54708;
+  border: 1px solid rgba(181, 71, 8, 0.25);
+}
+
 .table-wrap {
   overflow-x: auto;
   overflow-y: auto;
