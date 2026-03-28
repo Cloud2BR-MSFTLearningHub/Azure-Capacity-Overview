@@ -839,34 +839,47 @@ function renderEmptyUpdatesTable() {
 }
 
 function renderUpdatesTable(records, rawSearchTerm = "") {
-  // Deduplicate by product variant (providerId + name) — keep the row with the
-  // highest severity so the planning signal reflects the worst regional state.
-  const byProduct = new Map();
+  // Deduplicate by Azure service name — one row per distinct product regardless
+  // of how many SKU variants are in the catalog. Keep the worst-case availability
+  // signal so planning gaps are always surfaced.
+  const byService = new Map();
   for (const record of records) {
-    const key = `${record.providerId}::${record.name}`;
-    const existing = byProduct.get(key);
+    const serviceKey = getSourceProductName(record);
+    const existing = byService.get(serviceKey);
     if (!existing || record.severity > existing.severity) {
-      byProduct.set(key, record);
+      byService.set(serviceKey, record);
     }
   }
 
-  const updatesRows = [...byProduct.values()]
-    .map((record) => ({
-      ...record,
-      planningSignalLabel: getPlanningSignalLabel(record),
-      // Count how many of the current filtered records share this product
-      regionCount: records.filter((r) => r.providerId === record.providerId && r.name === record.name).length,
-    }))
+  // Count distinct regions covered by each service in the current filtered set
+  const regionsByService = new Map();
+  for (const record of records) {
+    const serviceKey = getSourceProductName(record);
+    if (!regionsByService.has(serviceKey)) regionsByService.set(serviceKey, new Set());
+    regionsByService.get(serviceKey).add(record.region);
+  }
+
+  const updatesRows = [...byService.values()]
+    .map((record) => {
+      const serviceKey = getSourceProductName(record);
+      const regions = regionsByService.get(serviceKey) ?? new Set();
+      return {
+        ...record,
+        planningSignalLabel: getPlanningSignalLabel(record),
+        coveredRegions: regions.size,
+        coveredRegionList: [...regions].map(getRegionDisplayName).sort().join(", "),
+      };
+    })
     .sort((left, right) => {
       return (
         right.severity - left.severity ||
-        getSourceProductName(left).localeCompare(getSourceProductName(right)) ||
-        left.name.localeCompare(right.name)
+        getSourceProductName(left).localeCompare(getSourceProductName(right))
       );
     });
 
+  const totalRegions = new Set(records.map((r) => r.region)).size;
   elements.updatesMeta.textContent = updatesRows.length
-    ? `${updatesRows.length} product${updatesRows.length === 1 ? "" : "s"} · ${records.length} region match${records.length === 1 ? "" : "es"}`
+    ? `${updatesRows.length} service${updatesRows.length === 1 ? "" : "s"} · ${totalRegions} region${totalRegions === 1 ? "" : "s"} in view`
     : state.allRecords.length
       ? "No Azure Updates rows match the current filters"
       : "No Azure update rows prepared";
@@ -888,7 +901,7 @@ function renderUpdatesTable(records, rawSearchTerm = "") {
               <span class="search-term-note">Paste-ready term for Azure Updates</span>
             </div>
           </td>
-          <td>${record.regionCount > 1 ? `<span title="${record.regionCount} regions in current filter">${record.regionCount} regions</span>` : renderHighlightedText(getRegionDisplayName(record.region), rawSearchTerm)}</td>
+          <td><span title="${escapeAttribute(record.coveredRegionList)}">${record.coveredRegions} region${record.coveredRegions === 1 ? "" : "s"}</span></td>
           <td>${renderHighlightedText(record.notes || "", rawSearchTerm)}</td>
           <td>
             <div class="source-actions">
@@ -1162,8 +1175,30 @@ function getUpdatesUrl(record) {
   return url.toString();
 }
 
+// Specific search terms per provider so Azure Updates links return targeted results
 function getUpdatesSearchTerm(record) {
-  return getSourceProductName(record);
+  const specificTerms = {
+    "compute-skus":      "Virtual Machines",
+    "sql-capabilities":  "Azure SQL",
+    "cognitive-skus":    record.name.includes("OpenAI") ? "Azure OpenAI" : "Azure AI Services",
+    "web-metadata":      "App Service",
+    "network-metadata":  "Azure Networking",
+    "storage-metadata":  "Azure Storage",
+    "aks-metadata":      "Azure Kubernetes Service",
+    "postgres-metadata": "Azure Database for PostgreSQL",
+    "mysql-metadata":    "Azure Database for MySQL",
+    "cosmos-metadata":   "Azure Cosmos DB",
+    "cache-metadata":    "Azure Cache for Redis",
+    "search-metadata":   "Azure AI Search",
+    "eventhub-metadata": "Azure Event Hubs",
+    "servicebus-metadata": "Azure Service Bus",
+    "keyvault-metadata": "Azure Key Vault",
+    "app-metadata":      "Azure Container Apps",
+    "signalr-metadata":  "Azure Web PubSub",
+    "ml-metadata":       "Azure Machine Learning",
+    "databricks-metadata": "Azure Databricks",
+  };
+  return specificTerms[record.providerId] || getSourceProductName(record);
 }
 
 function getUpdatesTitle(record) {
