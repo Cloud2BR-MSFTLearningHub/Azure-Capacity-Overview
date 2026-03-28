@@ -180,6 +180,21 @@ export const PROVIDERS = [
   createProviderMetadataProvider({ id: "signalr-metadata", label: "SignalR", namespace: "Microsoft.SignalRService" }),
   createProviderMetadataProvider({ id: "ml-metadata", label: "Machine Learning", namespace: "Microsoft.MachineLearningServices" }),
   createProviderMetadataProvider({ id: "databricks-metadata", label: "Databricks", namespace: "Microsoft.Databricks" }),
+  // ── Additional Azure services ───────────────────────────────────────────────
+  createProviderMetadataProvider({ id: "synapse-metadata", label: "Synapse Analytics", namespace: "Microsoft.Synapse" }),
+  createProviderMetadataProvider({ id: "datafactory-metadata", label: "Data Factory", namespace: "Microsoft.DataFactory" }),
+  createProviderMetadataProvider({ id: "containerregistry-metadata", label: "Container Registry", namespace: "Microsoft.ContainerRegistry" }),
+  createProviderMetadataProvider({ id: "apimanagement-metadata", label: "API Management", namespace: "Microsoft.ApiManagement" }),
+  createProviderMetadataProvider({ id: "logicapps-metadata", label: "Logic Apps", namespace: "Microsoft.Logic" }),
+  createProviderMetadataProvider({ id: "batch-metadata", label: "Batch", namespace: "Microsoft.Batch" }),
+  createProviderMetadataProvider({ id: "iothub-metadata", label: "IoT Hub", namespace: "Microsoft.Devices" }),
+  createProviderMetadataProvider({ id: "containerinstance-metadata", label: "Container Instances", namespace: "Microsoft.ContainerInstance" }),
+  createProviderMetadataProvider({ id: "communication-metadata", label: "Communication Services", namespace: "Microsoft.Communication" }),
+  createProviderMetadataProvider({ id: "springapps-metadata", label: "Spring Apps", namespace: "Microsoft.AppPlatform" }),
+  createProviderMetadataProvider({ id: "streamanalytics-metadata", label: "Stream Analytics", namespace: "Microsoft.StreamAnalytics" }),
+  createProviderMetadataProvider({ id: "servicefabric-metadata", label: "Service Fabric", namespace: "Microsoft.ServiceFabric" }),
+  createProviderMetadataProvider({ id: "purview-metadata", label: "Microsoft Purview", namespace: "Microsoft.Purview" }),
+  createProviderMetadataProvider({ id: "monitor-metadata", label: "Monitor / Log Analytics", namespace: "Microsoft.OperationalInsights" }),
 ];
 
 export const PROVIDER_MAP = new Map(PROVIDERS.map((provider) => [provider.id, provider]));

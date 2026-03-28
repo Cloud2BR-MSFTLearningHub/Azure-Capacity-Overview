@@ -558,6 +558,165 @@ const OVERVIEW_CATALOG = [
       restricted: "Web PubSub not available in this region",
     }),
   },
+  // ── Synapse Analytics ────────────────────────────────────────────────────────
+  {
+    providerId: "synapse-metadata", providerLabel: "Synapse Analytics",
+    name: "workspaces", resourceType: "workspaces",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, _RT4, {
+      available: "Azure Synapse Analytics · Unified analytics · Serverless and dedicated SQL pools",
+      preview: "Synapse Analytics in preview or staged rollout",
+      restricted: "Synapse Analytics not available in this region",
+    }),
+  },
+  // ── Data Factory ─────────────────────────────────────────────────────────────
+  {
+    providerId: "datafactory-metadata", providerLabel: "Data Factory",
+    name: "factories", resourceType: "factories",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3], _RT4, [], {
+      available: "Azure Data Factory · ETL and ELT pipelines · Integration runtime",
+      preview: "Data Factory in preview in this region",
+    }),
+  },
+  // ── Container Registry ───────────────────────────────────────────────────────
+  {
+    providerId: "containerregistry-metadata", providerLabel: "Container Registry",
+    name: "registries (Standard)", resourceType: "registries",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3], _RT4, [], {
+      available: "Azure Container Registry Standard · Geo-replication up to 10 replicas",
+      preview: "Container Registry Standard in preview in this region",
+    }),
+  },
+  {
+    providerId: "containerregistry-metadata", providerLabel: "Container Registry",
+    name: "registries (Premium)", resourceType: "registries",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, _RT4, {
+      available: "Azure Container Registry Premium · Private endpoint · Content trust",
+      preview: "Container Registry Premium in preview in this region",
+      restricted: "Container Registry Premium not available in this region",
+    }),
+  },
+  // ── API Management ───────────────────────────────────────────────────────────
+  {
+    providerId: "apimanagement-metadata", providerLabel: "API Management",
+    name: "service (Standard)", resourceType: "service",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, _RT4, {
+      available: "Azure API Management Standard · Developer portal · Policy engine",
+      preview: "API Management in preview or staged rollout",
+      restricted: "API Management not available in this region",
+    }),
+  },
+  {
+    providerId: "apimanagement-metadata", providerLabel: "API Management",
+    name: "service (Premium)", resourceType: "service",
+    availabilityByRegion: buildAvailabilityMap(_RT1, _RT2, [..._RT3, ..._RT4], {
+      available: "API Management Premium · Multi-region gateway · Self-hosted gateway · Zone-redundant",
+      preview: "API Management Premium in limited preview",
+      restricted: "API Management Premium not available in this region",
+    }),
+  },
+  // ── Logic Apps ───────────────────────────────────────────────────────────────
+  {
+    providerId: "logicapps-metadata", providerLabel: "Logic Apps",
+    name: "workflows (Standard)", resourceType: "workflows",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3], _RT4, [], {
+      available: "Azure Logic Apps Standard · Single-tenant · Stateful and stateless workflows",
+      preview: "Logic Apps in preview in this region",
+    }),
+  },
+  // ── Batch ────────────────────────────────────────────────────────────────────
+  {
+    providerId: "batch-metadata", providerLabel: "Batch",
+    name: "batchAccounts", resourceType: "batchAccounts",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, _RT4, {
+      available: "Azure Batch · HPC job scheduling · Low-priority VM pools",
+      preview: "Azure Batch in preview in this region",
+      restricted: "Azure Batch not available in this region",
+    }),
+  },
+  // ── IoT Hub ──────────────────────────────────────────────────────────────────
+  {
+    providerId: "iothub-metadata", providerLabel: "IoT Hub",
+    name: "IotHubs (Standard S1)", resourceType: "IotHubs",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, _RT4, {
+      available: "Azure IoT Hub Standard S1 · Device-to-cloud messaging · Device twins",
+      preview: "IoT Hub in preview or staged rollout",
+      restricted: "IoT Hub not available in this region",
+    }),
+  },
+  // ── Container Instances ──────────────────────────────────────────────────────
+  {
+    providerId: "containerinstance-metadata", providerLabel: "Container Instances",
+    name: "containerGroups", resourceType: "containerGroups",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, _RT4, {
+      available: "Azure Container Instances · Serverless containers · No cluster management",
+      preview: "Container Instances in preview in this region",
+      restricted: "Container Instances not available in this region",
+    }),
+  },
+  // ── Communication Services ───────────────────────────────────────────────────
+  {
+    providerId: "communication-metadata", providerLabel: "Communication Services",
+    name: "communicationServices", resourceType: "communicationServices",
+    availabilityByRegion: buildAvailabilityMap(
+      ["eastus", "westeurope", "australiaeast", "uksouth", "westus", "northeurope", "eastasia", "canadacentral"],
+      ["francecentral", "swedencentral", "koreacentral", "japaneast", "brazilsouth", "southeastasia"],
+      ["eastus2", "westus2", "westus3", "centralus", "northcentralus", "southcentralus", "canadaeast",
+       "germanywestcentral", "norwayeast", "centralindia", "uaenorth", "qatarcentral", "southafricanorth"],
+      {
+        available: "Azure Communication Services · SMS, Voice, Chat, Email · Regional data residency",
+        preview: "Communication Services in preview or staged rollout",
+        restricted: "Communication Services not available in this region",
+      }
+    ),
+  },
+  // ── Spring Apps ──────────────────────────────────────────────────────────────
+  {
+    providerId: "springapps-metadata", providerLabel: "Spring Apps",
+    name: "Spring (Enterprise)", resourceType: "Spring",
+    availabilityByRegion: buildAvailabilityMap(_RT1, _RT2, [..._RT3, ..._RT4], {
+      available: "Azure Spring Apps Enterprise · Tanzu components · Zone-redundant",
+      preview: "Spring Apps Enterprise in preview in this region",
+      restricted: "Spring Apps Enterprise not available in this region",
+    }),
+  },
+  // ── Stream Analytics ─────────────────────────────────────────────────────────
+  {
+    providerId: "streamanalytics-metadata", providerLabel: "Stream Analytics",
+    name: "streamingjobs", resourceType: "streamingjobs",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, _RT4, {
+      available: "Azure Stream Analytics · Real-time event processing · SQL-like query language",
+      preview: "Stream Analytics in preview in this region",
+      restricted: "Stream Analytics not available in this region",
+    }),
+  },
+  // ── Service Fabric ───────────────────────────────────────────────────────────
+  {
+    providerId: "servicefabric-metadata", providerLabel: "Service Fabric",
+    name: "clusters", resourceType: "clusters",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, _RT4, {
+      available: "Azure Service Fabric · Microservices platform · Stateful and stateless services",
+      preview: "Service Fabric in preview in this region",
+      restricted: "Service Fabric not available in this region",
+    }),
+  },
+  // ── Microsoft Purview ────────────────────────────────────────────────────────
+  {
+    providerId: "purview-metadata", providerLabel: "Microsoft Purview",
+    name: "accounts", resourceType: "accounts",
+    availabilityByRegion: buildAvailabilityMap(_RT1, _RT2, [..._RT3, ..._RT4], {
+      available: "Microsoft Purview · Data governance · Data catalog and lineage",
+      preview: "Purview in preview or staged rollout",
+      restricted: "Purview not available in this region",
+    }),
+  },
+  // ── Azure Monitor / Log Analytics ────────────────────────────────────────────
+  {
+    providerId: "monitor-metadata", providerLabel: "Monitor / Log Analytics",
+    name: "workspaces", resourceType: "workspaces",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3, ..._RT4], [], [], {
+      available: "Azure Monitor Log Analytics · Query and alerting · Workspace-based retention",
+    }),
+  },
 ];
 
 function loadDemoData(options = {}) {
@@ -676,7 +835,10 @@ function enrichRecord(record) {
 }
 
 function populateFilterOptions(records) {
-  setSelectOptions(elements.providerFilter, ["all", ...uniqueValues(records.map((record) => record.providerLabel))], "All providers");
+  // Use friendly product names (getSourceProductName) for the Provider filter so
+  // users see "Azure Kubernetes Service" instead of "aks-metadata" / "AKS".
+  const productNames = uniqueValues(records.map((record) => getSourceProductName(record)));
+  setSelectOptions(elements.providerFilter, ["all", ...productNames], "All services");
   setSelectOptions(
     elements.subscriptionFilter,
     ["all", ...uniqueValues(records.map((record) => record.subscriptionId))],
@@ -723,7 +885,7 @@ function applyFilters() {
       return false;
     }
 
-    if (provider !== "all" && record.providerLabel !== provider) {
+    if (provider !== "all" && getSourceProductName(record) !== provider) {
       return false;
     }
 
@@ -770,7 +932,7 @@ function renderFilterChips() {
   }
 
   if (elements.providerFilter.value !== "all") {
-    chips.push({ label: `Provider: ${elements.providerFilter.value}`, filterType: "provider" });
+    chips.push({ label: `Service: ${elements.providerFilter.value}`, filterType: "provider" });
   }
 
   if (elements.regionFilter.value !== "all") {
@@ -1197,6 +1359,20 @@ function getUpdatesSearchTerm(record) {
     "signalr-metadata":  "Azure Web PubSub",
     "ml-metadata":       "Azure Machine Learning",
     "databricks-metadata": "Azure Databricks",
+    "synapse-metadata":        "Azure Synapse Analytics",
+    "datafactory-metadata":    "Azure Data Factory",
+    "containerregistry-metadata": "Azure Container Registry",
+    "apimanagement-metadata":  "Azure API Management",
+    "logicapps-metadata":      "Azure Logic Apps",
+    "batch-metadata":          "Azure Batch",
+    "iothub-metadata":         "Azure IoT Hub",
+    "containerinstance-metadata": "Azure Container Instances",
+    "communication-metadata":  "Azure Communication Services",
+    "springapps-metadata":     "Azure Spring Apps",
+    "streamanalytics-metadata": "Azure Stream Analytics",
+    "servicefabric-metadata":  "Azure Service Fabric",
+    "purview-metadata":        "Microsoft Purview",
+    "monitor-metadata":        "Azure Monitor",
   };
   return specificTerms[record.providerId] || getSourceProductName(record);
 }
@@ -1261,6 +1437,20 @@ function getSourceProductName(record) {
     "signalr-metadata": "Azure SignalR Service",
     "ml-metadata": "Azure Machine Learning",
     "databricks-metadata": "Azure Databricks",
+    "synapse-metadata": "Azure Synapse Analytics",
+    "datafactory-metadata": "Azure Data Factory",
+    "containerregistry-metadata": "Azure Container Registry",
+    "apimanagement-metadata": "Azure API Management",
+    "logicapps-metadata": "Azure Logic Apps",
+    "batch-metadata": "Azure Batch",
+    "iothub-metadata": "Azure IoT Hub",
+    "containerinstance-metadata": "Azure Container Instances",
+    "communication-metadata": "Azure Communication Services",
+    "springapps-metadata": "Azure Spring Apps",
+    "streamanalytics-metadata": "Azure Stream Analytics",
+    "servicefabric-metadata": "Azure Service Fabric",
+    "purview-metadata": "Microsoft Purview",
+    "monitor-metadata": "Azure Monitor",
   };
 
   return providerProductNames[record.providerId] || record.providerLabel;
