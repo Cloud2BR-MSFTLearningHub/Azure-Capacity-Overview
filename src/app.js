@@ -985,6 +985,193 @@ const OVERVIEW_CATALOG = [
       preview: "Application Insights in preview in this region",
     }),
   },
+  // ── SQL Managed Instance ──────────────────────────────────────────────────────
+  {
+    providerId: "sqlmi-metadata", providerLabel: "SQL Managed Instance",
+    name: "managedInstances", resourceType: "managedInstances",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3, ..._RT4, ..._RT5], _RT6, [], {
+      available: "Azure SQL Managed Instance · Business Critical · General Purpose · Always-on availability groups",
+      preview: "SQL Managed Instance in preview in this region",
+    }),
+  },
+  // ── MariaDB ───────────────────────────────────────────────────────────────────
+  {
+    providerId: "mariadb-metadata", providerLabel: "MariaDB",
+    name: "servers", resourceType: "servers",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, [..._RT4, ..._RT5, ..._RT6], {
+      available: "Azure Database for MariaDB · General Purpose · Memory Optimized",
+      preview: "MariaDB in preview in this region",
+      restricted: "MariaDB not available in this region",
+    }),
+  },
+  // ── NetApp Files ──────────────────────────────────────────────────────────────
+  {
+    providerId: "netappfiles-metadata", providerLabel: "NetApp Files",
+    name: "netAppAccounts", resourceType: "netAppAccounts",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3, ..._RT4], _RT5, _RT6, {
+      available: "Azure NetApp Files · Standard / Premium / Ultra service levels · NFS and SMB",
+      preview: "NetApp Files in preview in this region",
+    }),
+  },
+  // ── Azure VMware Solution ─────────────────────────────────────────────────────
+  {
+    providerId: "avs-metadata", providerLabel: "Azure VMware Solution",
+    name: "privateClouds", resourceType: "privateClouds",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3], [..._RT4, "japanwest", "australiasoutheast", "ukwest"], [..._RT6], {
+      available: "Azure VMware Solution · vSphere + vSAN + NSX-T · HCX migration · AV36P / AV52 nodes",
+      preview: "Azure VMware Solution in preview in this region",
+    }),
+  },
+  // ── Static Web Apps ───────────────────────────────────────────────────────────
+  {
+    providerId: "staticweb-metadata", providerLabel: "Static Web Apps",
+    name: "staticSites", resourceType: "staticSites",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3], [..._RT4, ..._RT5], _RT6, {
+      available: "Azure Static Web Apps · Free · Standard · GitHub Actions / Azure DevOps CI/CD · Edge CDN",
+      preview: "Static Web Apps in preview in this region",
+    }),
+  },
+  // ── Notification Hubs ─────────────────────────────────────────────────────────
+  {
+    providerId: "notificationhubs-metadata", providerLabel: "Notification Hubs",
+    name: "namespaces", resourceType: "namespaces",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3, ..._RT4, ..._RT5], _RT6, [], {
+      available: "Azure Notification Hubs · Free · Basic · Standard · iOS / Android / Windows / Kindle push",
+      preview: "Notification Hubs in preview in this region",
+    }),
+  },
+  // ── Azure Maps ────────────────────────────────────────────────────────────────
+  {
+    providerId: "maps-metadata", providerLabel: "Azure Maps",
+    name: "accounts", resourceType: "accounts",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], [..._RT3, ..._RT4, ..._RT5], _RT6, {
+      available: "Azure Maps · S0 / S1 / Gen2 · Geocoding · Routing · Traffic · Render · Geofencing",
+      preview: "Azure Maps in preview in this region",
+    }),
+  },
+  // ── Digital Twins ─────────────────────────────────────────────────────────────
+  {
+    providerId: "digitaltwins-metadata", providerLabel: "Digital Twins",
+    name: "digitalTwinsInstances", resourceType: "digitalTwinsInstances",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, [..._RT4, ..._RT5, ..._RT6], {
+      available: "Azure Digital Twins · Ontology modeling · Live environment graph · Event routes",
+      preview: "Digital Twins in preview in this region",
+      restricted: "Digital Twins not available in this region",
+    }),
+  },
+  // ── Health Data Services ──────────────────────────────────────────────────────
+  {
+    providerId: "healthdata-metadata", providerLabel: "Health Data Services",
+    name: "workspaces", resourceType: "workspaces",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, [..._RT4, ..._RT5, ..._RT6], {
+      available: "Azure Health Data Services · FHIR service · DICOM service · MedTech service",
+      preview: "Health Data Services in preview in this region",
+      restricted: "Health Data Services not available in this region",
+    }),
+  },
+  // ── Dev Box ───────────────────────────────────────────────────────────────────
+  {
+    providerId: "devbox-metadata", providerLabel: "Dev Box",
+    name: "devcenters", resourceType: "devcenters",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3], [..._RT4, ..._RT5], _RT6, {
+      available: "Microsoft Dev Box · Dev Center · Dev Center Project · Network connections · SKU catalog",
+      preview: "Dev Box in preview in this region",
+    }),
+  },
+  // ── Managed Grafana ───────────────────────────────────────────────────────────
+  {
+    providerId: "grafana-metadata", providerLabel: "Managed Grafana",
+    name: "grafana", resourceType: "grafana",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3, ..._RT4, ..._RT5], _RT6, [], {
+      available: "Azure Managed Grafana · Essential · Standard · Azure Monitor + Prometheus integration",
+      preview: "Managed Grafana in preview in this region",
+    }),
+  },
+  // ── Chaos Studio ──────────────────────────────────────────────────────────────
+  {
+    providerId: "chaos-metadata", providerLabel: "Chaos Studio",
+    name: "experiments", resourceType: "experiments",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3], [..._RT4, ..._RT5], _RT6, {
+      available: "Azure Chaos Studio · Fault library · Experiment designer · Service-direct faults",
+      preview: "Chaos Studio in preview in this region",
+    }),
+  },
+  // ── Load Testing ──────────────────────────────────────────────────────────────
+  {
+    providerId: "loadtesting-metadata", providerLabel: "Load Testing",
+    name: "loadTests", resourceType: "loadTests",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3], [..._RT4, ..._RT5], _RT6, {
+      available: "Azure Load Testing · Apache JMeter · CI/CD integration · Serverless test execution",
+      preview: "Load Testing in preview in this region",
+    }),
+  },
+  // ── Red Hat OpenShift ─────────────────────────────────────────────────────────
+  {
+    providerId: "aro-metadata", providerLabel: "Red Hat OpenShift",
+    name: "openShiftClusters", resourceType: "openShiftClusters",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3], _RT4, [..._RT5, ..._RT6], {
+      available: "Azure Red Hat OpenShift · OCP 4.x · SRE-managed control plane · OperatorHub",
+      preview: "Red Hat OpenShift in preview in this region",
+      restricted: "Red Hat OpenShift not available in this region",
+    }),
+  },
+  // ── Azure Relay ───────────────────────────────────────────────────────────────
+  {
+    providerId: "relay-metadata", providerLabel: "Relay",
+    name: "namespaces", resourceType: "namespaces",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3, ..._RT4, ..._RT5], _RT6, [], {
+      available: "Azure Relay · Hybrid Connections · WCF Relays · Secure on-premises access without firewall changes",
+      preview: "Azure Relay in preview in this region",
+    }),
+  },
+  // ── Azure Migrate ─────────────────────────────────────────────────────────────
+  {
+    providerId: "migrate-metadata", providerLabel: "Azure Migrate",
+    name: "assessmentProjects", resourceType: "assessmentProjects",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3], [..._RT4, ..._RT5], _RT6, {
+      available: "Azure Migrate · Discovery and assessment · Server migration · Database migration · App containerization",
+      preview: "Azure Migrate in preview in this region",
+    }),
+  },
+  // ── Dedicated Host ────────────────────────────────────────────────────────────
+  {
+    providerId: "dedicatedhost-metadata", providerLabel: "Dedicated Host",
+    name: "hostGroups", resourceType: "hostGroups",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2, ..._RT3], [..._RT4, ..._RT5], _RT6, {
+      available: "Azure Dedicated Host · DCSv2 / DSv4 / ESv4 / FSv2 host families · Single-tenant physical isolation",
+      preview: "Dedicated Host in preview in this region",
+    }),
+  },
+  // ── Confidential Computing ────────────────────────────────────────────────────
+  {
+    providerId: "confidentialcompute-metadata", providerLabel: "Confidential Computing",
+    name: "virtualMachines (DCsv3)", resourceType: "virtualMachines",
+    availabilityByRegion: buildAvailabilityMap([..._RT1, ..._RT2], _RT3, [..._RT4, ..._RT5, ..._RT6], {
+      available: "Azure Confidential Computing · DCsv3 / DCdsv3 · AMD SEV-SNP · Intel TDX · SGX secure enclaves",
+      preview: "Confidential Computing in preview in this region",
+      restricted: "Confidential Computing not available in this region",
+    }),
+  },
+  // ── Azure Orbital ─────────────────────────────────────────────────────────────
+  {
+    providerId: "orbital-metadata", providerLabel: "Orbital",
+    name: "groundStations", resourceType: "groundStations",
+    availabilityByRegion: buildAvailabilityMap(
+      ["eastus", "westus2", "southcentralus", "australiaeast", "uksouth", "swedencentral", "brazilsouth", "germanywestcentral"],
+      [], [], {
+        available: "Azure Orbital Ground Station · Satellite contact scheduling · Downlink / uplink processing",
+      }),
+  },
+  // ── Azure Quantum ─────────────────────────────────────────────────────────────
+  {
+    providerId: "quantum-metadata", providerLabel: "Quantum",
+    name: "workspaces", resourceType: "workspaces",
+    availabilityByRegion: buildAvailabilityMap(
+      ["eastus", "westeurope", "japaneast", "uksouth", "australiaeast", "northeurope", "westus2"],
+      [], [], {
+        available: "Azure Quantum · Q# + QDK · IonQ · Quantinuum · Rigetti · 1QBit provider access",
+      }),
+  },
 ];
 
 function loadDemoData(options = {}) {
@@ -1786,6 +1973,26 @@ function getUpdatesSearchTerm(record) {
     "avd-metadata":            "Azure Virtual Desktop",
     "disk-metadata":           "Azure Managed Disks",
     "automation-metadata":     "Azure Automation",
+    "sqlmi-metadata":           "Azure SQL Managed Instance",
+    "mariadb-metadata":         "Azure Database for MariaDB",
+    "netappfiles-metadata":     "Azure NetApp Files",
+    "avs-metadata":             "Azure VMware Solution",
+    "staticweb-metadata":       "Azure Static Web Apps",
+    "notificationhubs-metadata": "Azure Notification Hubs",
+    "maps-metadata":            "Azure Maps",
+    "digitaltwins-metadata":    "Azure Digital Twins",
+    "healthdata-metadata":      "Azure Health Data Services",
+    "devbox-metadata":          "Microsoft Dev Box",
+    "grafana-metadata":         "Azure Managed Grafana",
+    "chaos-metadata":           "Azure Chaos Studio",
+    "loadtesting-metadata":     "Azure Load Testing",
+    "aro-metadata":             "Azure Red Hat OpenShift",
+    "relay-metadata":           "Azure Relay",
+    "migrate-metadata":         "Azure Migrate",
+    "dedicatedhost-metadata":   "Azure Dedicated Host",
+    "confidentialcompute-metadata": "Azure Confidential Computing",
+    "orbital-metadata":         "Azure Orbital",
+    "quantum-metadata":         "Azure Quantum",
   };
   return specificTerms[record.providerId] || getSourceProductName(record);
 }
@@ -1872,6 +2079,26 @@ function getSourceProductName(record) {
     "avd-metadata": "Azure Virtual Desktop",
     "disk-metadata": "Azure Managed Disks",
     "automation-metadata": "Azure Automation",
+    "sqlmi-metadata": "Azure SQL Managed Instance",
+    "mariadb-metadata": "Azure Database for MariaDB",
+    "netappfiles-metadata": "Azure NetApp Files",
+    "avs-metadata": "Azure VMware Solution",
+    "staticweb-metadata": "Azure Static Web Apps",
+    "notificationhubs-metadata": "Azure Notification Hubs",
+    "maps-metadata": "Azure Maps",
+    "digitaltwins-metadata": "Azure Digital Twins",
+    "healthdata-metadata": "Azure Health Data Services",
+    "devbox-metadata": "Microsoft Dev Box",
+    "grafana-metadata": "Azure Managed Grafana",
+    "chaos-metadata": "Azure Chaos Studio",
+    "loadtesting-metadata": "Azure Load Testing",
+    "aro-metadata": "Azure Red Hat OpenShift",
+    "relay-metadata": "Azure Relay",
+    "migrate-metadata": "Azure Migrate",
+    "dedicatedhost-metadata": "Azure Dedicated Host",
+    "confidentialcompute-metadata": "Azure Confidential Computing",
+    "orbital-metadata": "Azure Orbital",
+    "quantum-metadata": "Azure Quantum",
   };
 
   return providerProductNames[record.providerId] || record.providerLabel;

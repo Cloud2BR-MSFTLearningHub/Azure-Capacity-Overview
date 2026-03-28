@@ -204,6 +204,27 @@ export const PROVIDERS = [
   createProviderMetadataProvider({ id: "avd-metadata", label: "Virtual Desktop", namespace: "Microsoft.DesktopVirtualization" }),
   createProviderMetadataProvider({ id: "disk-metadata", label: "Disk Storage", namespace: "Microsoft.Compute", resourceTypes: ["disks"] }),
   createProviderMetadataProvider({ id: "automation-metadata", label: "Automation", namespace: "Microsoft.Automation" }),
+  // ── New services ──────────────────────────────────────────────────────────────
+  createProviderMetadataProvider({ id: "sqlmi-metadata", label: "SQL Managed Instance", namespace: "Microsoft.Sql", resourceTypes: ["managedInstances"] }),
+  createProviderMetadataProvider({ id: "mariadb-metadata", label: "MariaDB", namespace: "Microsoft.DBforMariaDB" }),
+  createProviderMetadataProvider({ id: "netappfiles-metadata", label: "NetApp Files", namespace: "Microsoft.NetApp" }),
+  createProviderMetadataProvider({ id: "avs-metadata", label: "Azure VMware Solution", namespace: "Microsoft.AVS" }),
+  createProviderMetadataProvider({ id: "staticweb-metadata", label: "Static Web Apps", namespace: "Microsoft.Web", resourceTypes: ["staticSites"] }),
+  createProviderMetadataProvider({ id: "notificationhubs-metadata", label: "Notification Hubs", namespace: "Microsoft.NotificationHubs" }),
+  createProviderMetadataProvider({ id: "maps-metadata", label: "Azure Maps", namespace: "Microsoft.Maps" }),
+  createProviderMetadataProvider({ id: "digitaltwins-metadata", label: "Digital Twins", namespace: "Microsoft.DigitalTwins" }),
+  createProviderMetadataProvider({ id: "healthdata-metadata", label: "Health Data Services", namespace: "Microsoft.HealthcareApis" }),
+  createProviderMetadataProvider({ id: "devbox-metadata", label: "Dev Box", namespace: "Microsoft.DevCenter" }),
+  createProviderMetadataProvider({ id: "grafana-metadata", label: "Managed Grafana", namespace: "Microsoft.Dashboard" }),
+  createProviderMetadataProvider({ id: "chaos-metadata", label: "Chaos Studio", namespace: "Microsoft.Chaos" }),
+  createProviderMetadataProvider({ id: "loadtesting-metadata", label: "Load Testing", namespace: "Microsoft.LoadTestService" }),
+  createProviderMetadataProvider({ id: "aro-metadata", label: "Red Hat OpenShift", namespace: "Microsoft.RedHatOpenShift" }),
+  createProviderMetadataProvider({ id: "relay-metadata", label: "Relay", namespace: "Microsoft.Relay" }),
+  createProviderMetadataProvider({ id: "migrate-metadata", label: "Azure Migrate", namespace: "Microsoft.Migrate" }),
+  createProviderMetadataProvider({ id: "dedicatedhost-metadata", label: "Dedicated Host", namespace: "Microsoft.Compute", resourceTypes: ["hostGroups"] }),
+  createProviderMetadataProvider({ id: "confidentialcompute-metadata", label: "Confidential Computing", namespace: "Microsoft.Compute", resourceTypes: ["virtualMachines"] }),
+  createProviderMetadataProvider({ id: "orbital-metadata", label: "Orbital", namespace: "Microsoft.Orbital" }),
+  createProviderMetadataProvider({ id: "quantum-metadata", label: "Quantum", namespace: "Microsoft.Quantum" }),
 ];
 
 export const PROVIDER_MAP = new Map(PROVIDERS.map((provider) => [provider.id, provider]));
