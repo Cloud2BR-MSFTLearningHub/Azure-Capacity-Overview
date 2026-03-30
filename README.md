@@ -11,6 +11,9 @@ Last updated: 2026-03-25
 
 > Azure Capacity Overview is a static browser app for high-level Azure deployment planning. It refreshes an overview of Azure regional availability, supported SKUs, and service capability signals, shows the latest refresh time in the top-right of the UI, and provides a filtered dashboard for seeing what new workloads can land in a region.
 
+> [!IMPORTANT]
+> The information provided and any document (such as scripts, sample codes, etc.) is provided `AS-IS` and `WITH ALL FAULTS`. Pricing estimates are for `demonstration purposes only and do not reflect final pricing`. `Microsoft assumes no liability` for your use of this information and makes no guarantees or warranties, expressed or implied, regarding its accuracy or completeness, including any pricing details. `Please note that these demos are intended as a guide and are based on personal experiences. For official guidance, support, or more detailed information, please refer to Microsoft's official documentation or contact Microsoft directly`: [Microsoft Sales and Support](https://support.microsoft.com/contactus?ContactUsExperienceEntryPointAssetId=S.HP.SMC-HOME)
+
 ## Quick overview
 
 This project is designed for one main question:
