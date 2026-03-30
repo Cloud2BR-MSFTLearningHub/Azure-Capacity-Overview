@@ -49,7 +49,6 @@ const elements = {
   pageBody: document.body,
   providerOptions: document.querySelector("#provider-options"),
   regionsInput: document.querySelector("#regions-input"),
-  refreshButton: document.querySelector("#refresh-button"),
   searchButton: document.querySelector("#search-button"),
   themeToggleButton: document.querySelector("#theme-toggle"),
   lastRefresh: document.querySelector("#last-refresh"),
@@ -82,7 +81,6 @@ async function bootstrap() {
 }
 
 function wireEvents() {
-  elements.refreshButton.addEventListener("click", refreshData);
   elements.searchButton.addEventListener("click", applyFilters);
   elements.themeToggleButton.addEventListener("click", toggleTheme);
   elements.tableBody.addEventListener("click", handleSourceActionClick);
@@ -169,30 +167,6 @@ function applyTheme(theme) {
 
 function getCurrentTheme() {
   return elements.pageBody.dataset.theme || "light";
-}
-
-async function refreshData() {
-  const selectedProviderIds = getSelectedProviderIds();
-  const manualRegions = parseList(elements.regionsInput ? elements.regionsInput.value : "").map(normalizeRegion);
-
-  if (selectedProviderIds.length === 0) {
-    setStatus("Select at least one availability provider to display.", "warn");
-    return;
-  }
-
-  persistSettings();
-  setLoading(true);
-  setStatus("Refreshing Azure availability overview...", "neutral");
-
-  try {
-    loadDemoData({
-      source: "overview",
-      providerIds: selectedProviderIds,
-      regions: manualRegions,
-    });
-  } finally {
-    setLoading(false);
-  }
 }
 
 // ── Region tiers reflecting typical Microsoft GA rollout patterns ─────────────
@@ -1684,7 +1658,6 @@ function updateSortHeaders() {
 
 function setLoading(isLoading) {
   state.loading = isLoading;
-  elements.refreshButton.disabled = isLoading;
 }
 
 function setStatus(message, tone = "neutral") {
