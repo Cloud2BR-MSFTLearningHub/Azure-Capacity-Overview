@@ -35,7 +35,6 @@ const DEFAULT_REGIONS = [
 const state = {
   allRecords: [],
   filteredRecords: [],
-  liveUpdates: [],
   lastRefresh: null,
   regionsScanned: 0,
   loading: false,
@@ -70,8 +69,6 @@ const elements = {
   tableHead: document.querySelector("#availability-table thead"),
   scopeColumnHeader: document.querySelector("#scope-column-header"),
   filterChips: document.querySelector("#filter-chips"),
-  liveFeedContainer: document.querySelector("#live-feed-container"),
-  loadLiveUpdatesButton: document.querySelector("#load-live-updates"),
 };
 
 async function bootstrap() {
@@ -92,9 +89,6 @@ function wireEvents() {
   elements.updatesTableBody.addEventListener("click", handleSourceActionClick);
   elements.tableHead.addEventListener("click", handleTableSortClick);
   elements.filterChips.addEventListener("click", handleChipClick);
-  if (elements.loadLiveUpdatesButton) {
-    elements.loadLiveUpdatesButton.addEventListener("click", handleLoadLiveUpdates);
-  }
 
   [
     elements.searchInput,
@@ -196,10 +190,6 @@ async function refreshData() {
       providerIds: selectedProviderIds,
       regions: manualRegions,
     });
-    // Re-fetch the live feed if it was previously loaded
-    if (state.liveUpdates.length > 0) {
-      handleLoadLiveUpdates();
-    }
   } finally {
     setLoading(false);
   }
@@ -1265,139 +1255,6 @@ function annotateWithDelta(records, snapshot) {
   });
 }
 
-// ── Live Azure Updates RSS feed ───────────────────────────────────────────────
-async function fetchAzureUpdatesRSS() {
-  const response = await fetch("https://azure.microsoft.com/en-us/updates/feed/", { mode: "cors" });
-  if (!response.ok) throw new Error(`Feed returned HTTP ${response.status}`);
-  return parseRSSFeed(await response.text());
-}
-
-function parseRSSFeed(text) {
-  const doc = new DOMParser().parseFromString(text, "application/xml");
-  if (doc.querySelector("parsererror")) throw new Error("Could not parse RSS XML");
-
-  // Support both Atom (<entry>) and RSS 2.0 (<item>)
-  const items = [...doc.querySelectorAll("entry, item")];
-  const STATUS_TERMS = new Set(["Generally Available", "In Preview", "In Development", "Retired"]);
-
-  return items.map((item) => {
-    const title = item.querySelector("title")?.textContent?.trim() || "";
-    const linkEl = item.querySelector("link");
-    const link = linkEl?.getAttribute("href") || linkEl?.textContent?.trim() || "";
-    const updated = item.querySelector("updated, pubDate")?.textContent?.trim() || "";
-    const summary = item.querySelector("summary, description")?.textContent?.trim()
-      .replace(/<[^>]*>/g, "").slice(0, 200) || "";
-    const categories = [...item.querySelectorAll("category")]
-      .map((c) => c.getAttribute("term") || c.textContent.trim()).filter(Boolean);
-
-    const status = categories.find((c) => STATUS_TERMS.has(c)) || "Generally Available";
-    const products = categories.filter((c) => !STATUS_TERMS.has(c));
-    const publishedDate = updated ? new Date(updated) : null;
-
-    return { title, link, summary, status, products, publishedDate };
-  });
-}
-
-function renderLiveUpdates(entries, rawSearchTerm = "") {
-  const container = elements.liveFeedContainer;
-  if (!container) return;
-
-  const STATUS_CLASS = {
-    "Generally Available": "available",
-    "In Preview": "preview",
-    "In Development": "preview",
-    "Retired": "restricted",
-  };
-
-  const q = rawSearchTerm.toLowerCase();
-  const filtered = q
-    ? entries.filter((e) =>
-        e.title.toLowerCase().includes(q) ||
-        e.summary.toLowerCase().includes(q) ||
-        e.products.some((p) => p.toLowerCase().includes(q))
-      )
-    : entries;
-
-  const metaEl = container.querySelector(".live-feed-meta");
-  const bodyEl = container.querySelector("#live-feed-tbody");
-  if (!metaEl || !bodyEl) return;
-
-  metaEl.textContent = q
-    ? `${filtered.length} of ${entries.length} updates match "${rawSearchTerm}"`
-    : `${entries.length} latest updates from azure.microsoft.com/en-us/updates`;
-
-  if (filtered.length === 0) {
-    bodyEl.innerHTML = `<tr><td colspan="5" class="empty-table">No updates match "${escapeHtml(rawSearchTerm)}"</td></tr>`;
-    return;
-  }
-
-  bodyEl.innerHTML = filtered.map((entry) => {
-    const statusClass = STATUS_CLASS[entry.status] || "available";
-    const dateStr = entry.publishedDate
-      ? entry.publishedDate.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
-      : "n/a";
-    const productTags = entry.products.slice(0, 4)
-      .map((p) => `<span class="product-tag">${escapeHtml(p)}</span>`).join(" ");
-    return `
-      <tr>
-        <td><span class="risk-pill ${statusClass}">${escapeHtml(entry.status)}</span></td>
-        <td class="live-update-title">${renderHighlightedText(entry.title, rawSearchTerm)}</td>
-        <td>${productTags}</td>
-        <td class="live-update-date">${dateStr}</td>
-        <td><a class="source-link" href="${escapeAttribute(entry.link)}" target="_blank" rel="noreferrer">Open ↗</a></td>
-      </tr>`;
-  }).join("");
-}
-
-async function handleLoadLiveUpdates() {
-  const btn = elements.loadLiveUpdatesButton;
-  const container = elements.liveFeedContainer;
-  if (!btn || !container) return;
-
-  btn.disabled = true;
-  btn.textContent = "Loading…";
-
-  // Build the table scaffold once
-  container.innerHTML = `
-    <p class="live-feed-meta table-meta">Fetching Azure Updates feed…</p>
-    <div class="table-wrap">
-      <table class="updates-table live-feed-table">
-        <thead>
-          <tr>
-            <th>Status</th>
-            <th>Title</th>
-            <th>Products</th>
-            <th>Date</th>
-            <th>Link</th>
-          </tr>
-        </thead>
-        <tbody id="live-feed-tbody">
-          <tr><td colspan="5" class="empty-table">Loading…</td></tr>
-        </tbody>
-      </table>
-    </div>`;
-
-  try {
-    const entries = await fetchAzureUpdatesRSS();
-    state.liveUpdates = entries;
-    renderLiveUpdates(entries, elements.searchInput.value.trim());
-    btn.textContent = `Reload feed (${entries.length})`;
-  } catch (err) {
-    const isCors = err.message === "Failed to fetch" || err.message.startsWith("NetworkError");
-    container.innerHTML = `
-      <div class="source-notice">
-        <span class="source-notice-icon">ℹ️</span>
-        <span>${isCors
-          ? "Live feed not available in this browser context — static GitHub Pages sites cannot fetch external RSS feeds due to browser CORS restrictions. Browse all updates directly on Microsoft."
-          : escapeHtml(err.message)}</span>
-        <a class="source-notice-link" href="https://azure.microsoft.com/en-us/updates/" target="_blank" rel="noreferrer">Open Azure Updates ↗</a>
-      </div>`;
-    btn.textContent = "Retry";
-  } finally {
-    btn.disabled = false;
-  }
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 function enrichRecord(record) {
   const availability = record.availability || "available";
@@ -1504,9 +1361,6 @@ function applyFilters() {
   renderUpdatesTable(state.filteredRecords, rawSearchTerm);
   renderTable(state.filteredRecords, rawSearchTerm);
   renderFilterChips();
-  if (state.liveUpdates.length) {
-    renderLiveUpdates(state.liveUpdates, rawSearchTerm);
-  }
 }
 
 function renderFilterChips() {
