@@ -51,7 +51,7 @@ const elements = {
   providerOptions: document.querySelector("#provider-options"),
   regionsInput: document.querySelector("#regions-input"),
   refreshButton: document.querySelector("#refresh-button"),
-  demoButton: document.querySelector("#demo-button"),
+  searchButton: document.querySelector("#search-button"),
   themeToggleButton: document.querySelector("#theme-toggle"),
   lastRefresh: document.querySelector("#last-refresh"),
   statusBadge: document.querySelector("#status-badge"),
@@ -86,7 +86,7 @@ async function bootstrap() {
 
 function wireEvents() {
   elements.refreshButton.addEventListener("click", refreshData);
-  elements.demoButton.addEventListener("click", () => loadDemoData({ source: "overview" }));
+  elements.searchButton.addEventListener("click", applyFilters);
   elements.themeToggleButton.addEventListener("click", toggleTheme);
   elements.tableBody.addEventListener("click", handleSourceActionClick);
   elements.updatesTableBody.addEventListener("click", handleSourceActionClick);
@@ -196,6 +196,10 @@ async function refreshData() {
       providerIds: selectedProviderIds,
       regions: manualRegions,
     });
+    // Re-fetch the live feed if it was previously loaded
+    if (state.liveUpdates.length > 0) {
+      handleLoadLiveUpdates();
+    }
   } finally {
     setLoading(false);
   }

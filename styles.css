@@ -506,16 +506,42 @@ h2 {
   padding: 12px 16px;
   margin-top: 20px;
   border-radius: var(--radius-sm);
-  background: color-mix(in oklab, #1e40af 12%, var(--surface));
-  border: 1px solid color-mix(in oklab, #1e40af 40%, transparent);
+  background: #172554;
+  border: 1px solid #1d4ed8;
   font-size: 0.83rem;
-  color: var(--text-secondary);
+  color: #bfdbfe;
   line-height: 1.55;
+}
+
+.disclaimer-notice strong {
+  color: #e0f2ff;
 }
 
 .disclaimer-notice span {
   flex: 1;
   min-width: 200px;
+}
+
+.disclaimer-notice .source-notice-link {
+  color: #93c5fd;
+  border-color: rgba(147, 197, 253, 0.4);
+  background: rgba(147, 197, 253, 0.12);
+}
+
+.disclaimer-notice .source-notice-link:hover {
+  background: rgba(147, 197, 253, 0.22);
+  border-color: rgba(147, 197, 253, 0.6);
+}
+
+.search-input-wrap {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+.search-input-wrap input {
+  flex: 1;
 }
 
 .workspace-header {

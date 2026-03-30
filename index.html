@@ -51,7 +51,6 @@
               <p class="panel-intro">Choose the regions and provider signals you want to compare, then refresh the view.</p>
             </div>
             <div class="actions-inline">
-              <button id="demo-button" class="ghost-button" type="button">Load overview data</button>
               <button id="refresh-button" class="primary-button" type="button">Refresh data</button>
             </div>
           </div>
@@ -67,7 +66,10 @@
           <div class="filter-bar">
             <label class="global-search-label">
               <span>Filter both tables</span>
-              <input id="search-input" type="search" placeholder="Try aks, openai, west europe. Space separates terms and filters both tables" />
+              <div class="search-input-wrap">
+                <input id="search-input" type="search" placeholder="Try aks, openai, west europe. Space separates terms and filters both tables" />
+                <button id="search-button" class="ghost-button" type="button">Search</button>
+              </div>
             </label>
             <div class="filter-bar-controls">
               <label class="field">
