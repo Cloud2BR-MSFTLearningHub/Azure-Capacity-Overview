@@ -499,18 +499,18 @@ h2 {
 }
 
 .disclaimer-notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding: 12px 16px;
+  display: block;
+  padding: 12px 16px 12px 20px;
   margin-top: 20px;
   border-radius: var(--radius-sm);
   background: #172554;
-  border: 1px solid #1d4ed8;
+  border-left: 4px solid #3b82f6;
+  border-top: 1px solid #1d4ed8;
+  border-right: 1px solid #1d4ed8;
+  border-bottom: 1px solid #1d4ed8;
   font-size: 0.83rem;
   color: #bfdbfe;
-  line-height: 1.55;
+  line-height: 1.65;
 }
 
 .disclaimer-notice strong {
@@ -518,11 +518,12 @@ h2 {
 }
 
 .disclaimer-notice span {
-  flex: 1;
-  min-width: 200px;
+  display: inline;
 }
 
 .disclaimer-notice .source-notice-link {
+  display: inline-block;
+  margin-top: 8px;
   color: #93c5fd;
   border-color: rgba(147, 197, 253, 0.4);
   background: rgba(147, 197, 253, 0.12);

@@ -1386,11 +1386,11 @@ async function handleLoadLiveUpdates() {
     const isCors = err.message === "Failed to fetch" || err.message.startsWith("NetworkError");
     container.innerHTML = `
       <div class="source-notice">
-        <span class="source-notice-icon">⚠️</span>
+        <span class="source-notice-icon">ℹ️</span>
         <span>${isCors
-          ? "The Azure Updates RSS feed is blocked by CORS. GitHub Pages serves from a different origin and browsers block the request. Use the direct link to browse all 9,000+ updates on Microsoft."
+          ? "Live feed not available in this browser context — static GitHub Pages sites cannot fetch external RSS feeds due to browser CORS restrictions. Browse all updates directly on Microsoft."
           : escapeHtml(err.message)}</span>
-        <a class="source-notice-link" href="https://azure.microsoft.com/en-us/updates/" target="_blank" rel="noreferrer">Open all Azure Updates ↗</a>
+        <a class="source-notice-link" href="https://azure.microsoft.com/en-us/updates/" target="_blank" rel="noreferrer">Open Azure Updates ↗</a>
       </div>`;
     btn.textContent = "Retry";
   } finally {
@@ -1831,7 +1831,6 @@ function updateSortHeaders() {
 function setLoading(isLoading) {
   state.loading = isLoading;
   elements.refreshButton.disabled = isLoading;
-  elements.demoButton.disabled = isLoading;
 }
 
 function setStatus(message, tone = "neutral") {
