@@ -56,20 +56,18 @@ It is intentionally lightweight:
 
 ## What the data means
 
-This app does not attempt to show exact real-time free capacity remaining in Azure.
+> Ueful for early regional planning, service comparison, and rollout conversations, but not for proving tenant-specific quota, allocation, or reservation outcomes.
 
-Instead, it provides a planning-oriented overview based on public regional signals such as:
-
-- SKU presence by region
-- service presence by region
-- zone support
-- published capability ceilings such as vCores, tiers, and service objectives
-
-That makes it useful for early regional planning, service comparison, and rollout conversations, but not for proving tenant-specific quota, allocation, or reservation outcomes.
+> [!IMPORTANT]
+> This app does not attempt to show exact real-time free capacity remaining in Azure. Instead, it provides a planning-oriented overview based on public regional signals such as:
+> - SKU presence by region
+> - service presence by region
+> - zone support
+> - published capability ceilings such as vCores, tiers, and service objectives
 
 ## Included providers
 
-The dashboard focuses on an overview of Azure resource availability rather than current subscription consumption.
+> The dashboard focuses on an overview of Azure resource availability rather than current subscription consumption.
 
 <details>
 <summary><strong>Rich SKU and capability providers</strong></summary>
@@ -105,9 +103,7 @@ The dashboard focuses on an overview of Azure resource availability rather than 
 <details>
 <summary><strong>Why these providers were chosen</strong></summary>
 
-Azure does not expose one universal API with actual global free-capacity counts for brand new customers. Capacity-related signals are fragmented across providers, API versions, and service-specific metadata shapes.
-
-For that reason, the app uses an extendable provider registry in [src/providers.js](src/providers.js) instead of assuming one shared Azure capacity schema. The current app renders an overview catalog built from those provider families so the dashboard remains usable without sign-in or subscription scope.
+> Azure does not expose one universal API with actual global free-capacity counts for brand new customers. Capacity-related signals are fragmented across providers, API versions, and service-specific metadata shapes. For that reason, the app uses an extendable provider registry in [src/providers.js](src/providers.js) instead of assuming one shared Azure capacity schema. The current app renders an overview catalog built from those provider families so the dashboard remains usable without sign-in or subscription scope.
 
 The closest reliable signals for a planning overview are:
 
@@ -118,28 +114,9 @@ The closest reliable signals for a planning overview are:
 
 </details>
 
-## Refresh overview data
-
-1. Optionally enter target regions.
-2. Choose the availability providers to display.
-3. Click `Refresh data`.
-
-The dashboard refreshes its built-in Azure availability overview catalog and updates the filtered planning view without requiring sign-in or subscription scope.
-
-Use the `Source` actions in the UI to open or copy the relevant public Microsoft verification link for each row.
-
-<details>
-<summary><strong>Notes and limits</strong></summary>
-
-- Azure does not publish a single public feed that says exactly how much free infrastructure remains globally for new customers.
-- The data shown here is an overview catalog for planning: supported SKUs, service presence in region, zones, and SQL capability ceilings.
-- Because this version is meant for broad regional availability research, it points to public Microsoft availability references rather than tenant-specific or subscription-scoped checks.
-
-</details>
-
 ## Deploy to GitHub Pages
 
-This repo includes a Pages workflow in `.github/workflows/deploy-pages.yml`.
+> This repo includes a Pages workflow in `.github/workflows/deploy-pages.yml`.
 
 1. Push the repository to GitHub.
 2. In GitHub, open `Settings` > `Pages`.
