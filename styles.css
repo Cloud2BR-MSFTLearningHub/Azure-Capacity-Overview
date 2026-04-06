@@ -1308,7 +1308,8 @@ body[data-theme="dark"] .search-highlight {
 
 .identity-org-link {
   overflow-wrap: anywhere;
-  max-width: 18ch;
+  max-width: 30ch;
+  line-height: 1.45;
 }
 
 .identity-list {
